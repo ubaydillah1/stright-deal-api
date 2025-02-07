@@ -26,12 +26,6 @@ router.get(
   async function (req: Request, res: Response, next: NextFunction) {
     const code = req.query.code as string;
 
-    if (!code) {
-      res.sendStatus(400).json({
-        error: "Code parameter is missing or invalid.",
-      });
-    }
-
     try {
       const redirectUrl = `${clientUrl}/oauth`;
       const oAuth2Client = new OAuth2Client(

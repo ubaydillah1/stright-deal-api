@@ -33,11 +33,6 @@ function getUserData(accessToken) {
 router.get("/", function (req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         const code = req.query.code;
-        if (!code) {
-            res.sendStatus(400).json({
-                error: "Code parameter is missing or invalid.",
-            });
-        }
         try {
             const redirectUrl = `${clientUrl}/oauth`;
             const oAuth2Client = new google_auth_library_1.OAuth2Client(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, redirectUrl);

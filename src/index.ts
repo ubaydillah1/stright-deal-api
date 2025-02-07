@@ -3,8 +3,8 @@ import "dotenv/config";
 import dashboardRouter from "./routes/dashboardRoutes";
 import googleOuthRouter from "./routes/googleOAuthRoutes";
 import cors from "cors";
-// import { PrismaClient } from "@prisma/client";
-// const prisma = new PrismaClient();
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
 
 const app = express();
 
@@ -24,20 +24,20 @@ app.use(
 app.use("/oauth", googleOuthRouter);
 app.use("/api/dashboard", dashboardRouter);
 
-// app.get("/prisma", async (req, res) => {
-//   try {
-//     const allUsers = await prisma.user.findMany();
+app.get("/prisma", async (req, res) => {
+  try {
+    const allUsers = await prisma.user.findMany();
 
-//     res.json({
-//       user: allUsers,
-//     });
-//   } catch (err) {
-//     const error = err as Error;
-//     res.json({
-//       message: error.message,
-//     });
-//   }
-// });
+    res.json({
+      user: allUsers,
+    });
+  } catch (err) {
+    const error = err as Error;
+    res.json({
+      message: error.message,
+    });
+  }
+});
 
 app.get("*", (req: Request, res: Response) => {
   res.json({

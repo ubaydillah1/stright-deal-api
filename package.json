@@ -22,8 +22,7 @@
     "typescript": "^5.7.3"
   },
   "scripts": {
-    "start": "node dist/index.js",
-    "build": "tsc -p .",
+    "build": "tsc",
     "postinstall": "prisma generate"
   },
   "author": "",
