@@ -13,28 +13,150 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Post {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  title     String   @db.VarChar(255)
-  content   String?
-  published Boolean  @default(false)
-  author    User     @relation(fields: [authorId], references: [id])
-  authorId  Int
+enum Provider {
+  Google
+  Apple
+  Local
 }
 
-model Profile {
-  id     Int     @id @default(autoincrement())
-  bio    String?
-  user   User    @relation(fields: [userId], references: [id])
-  userId Int     @unique
+enum Role {
+  Admin
+  User
+  Visitor
+}
+
+enum StatusReview {
+  NeedToReview
+  InReview
+  Reviewed
+  Published
+  Rejected
+}
+
+enum TransmissionType {
+  AutomaticCars
+  ManualCars
+}
+
+enum LoanOrLeaseStatus {
+  No
+  Loan
+  Lease
+}
+
+enum PlannedSaleTime {
+  In24Hours
+  ThisWeek
+  ThisMonth
+  NotSure
+}
+
+enum ExteriorCondition {
+  MinorCosmeticDamage
+  ModerateCosmeticDamages
+  CrackedBodywork
+  Rust
+  ChippedOrCrackedGlass
+  NoExteriorDamage
+}
+
+enum InteriorDamage {
+  NoticeableStains
+  PersistentOdors
+  RipsOrTearsInSeats
+  DamagedDashboardOrInteriorPanels
+  NoInteriorDamage
+}
+
+enum TireReplacementTimeframe {
+  LessThan12MonthsAgo
+  OverAYearAgo
+}
+
+enum ConditionStatus {
+  Poor
+  Good
+  Exceptional
+}
+
+enum PlannedSaleTimeline {
+  Immediately
+  AlmostReady
+  NotReadyYet
 }
 
 model User {
-  id      Int      @id @default(autoincrement())
-  email   String   @unique
-  name    String?
-  posts   Post[]
-  profile Profile?
+  id              String        @id @default(uuid())
+  email           String        @unique
+  firstName       String
+  lastName        String
+  password        String?
+  phoneNumber     String?
+  otpToken        String?
+  expiredOtpToken DateTime?
+  refreshToken    String
+  provider        Provider      @default(Local)
+  avatar          String
+  role            Role          @default(Visitor)
+  activityLogs    ActivityLog[]
+  Cars            Car[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@map("users")
+}
+
+model Car {
+  id                       String                   @id @default(uuid())
+  user                     User?                    @relation(fields: [userId], references: [id])
+  userId                   String?
+  // owner Type
+  slug                     String
+  vin                      String?
+  miliage                  Int
+  statusReview             StatusReview
+  transmission_type        TransmissionType
+  isSoloOwner              Boolean
+  color                    String
+  loanOrLeaseStatus        LoanOrLeaseStatus
+  isTradeIn                Boolean
+  plannedSaleTime          PlannedSaleTime
+  additionalFeature        String[]
+  exteriorCondition        ExteriorCondition
+  interiorDamage           InteriorDamage
+  keyCount                 Int
+  tireSetCount             Int
+  tireReplacementTimeframe TireReplacementTimeframe
+  // Tire type
+  hasOriginalFactoryRims   Boolean
+  hasMechanicalIssues      Boolean
+  isDriveable              Boolean
+  hasAccidentOrClaimStatus Boolean
+  overallConditionStatus   ConditionStatus
+  plannedSaleTimeline      PlannedSaleTimeline
+  activityLogs             ActivityLog[]
+  CardImages               CarImage[]
+  createdAt                DateTime                 @default(now())
+  updatedAt                DateTime                 @updatedAt
+
+  @@map("cars")
+}
+
+model CarImage {
+  id       String @id @default(uuid())
+  Car      Car    @relation(fields: [carId], references: [id])
+  carId    String
+  imageUrl String
+
+  @@map("car_images")
+}
+
+model ActivityLog {
+  id     String  @id @default(uuid())
+  Car    Car?    @relation(fields: [carId], references: [id])
+  carId  String?
+  User   User?   @relation(fields: [userId], references: [id])
+  userId String?
+
+  @@map("activity_logs")
 }

@@ -1,10 +1,9 @@
-import express, { Request, Response, NextFunction } from "express";
+import express, { Request, Response } from "express";
 import "dotenv/config";
 import dashboardRouter from "./routes/dashboardRoutes";
-import googleOuthRouter from "./routes/googleOAuthRoutes";
+import authRouter from "./routes/authRoutes";
 import cors from "cors";
-import { PrismaClient } from "@prisma/client";
-const prisma = new PrismaClient();
+import prisma from "./config/prismaClient";
 
 const app = express();
 
@@ -12,6 +11,7 @@ const PORT = process.env.PORT;
 const HOST = process.env.HOST;
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(
   cors({
     origin: "*",
@@ -21,7 +21,7 @@ app.use(
   })
 );
 
-app.use("/oauth", googleOuthRouter);
+app.use("/api/auth", authRouter);
 app.use("/api/dashboard", dashboardRouter);
 
 app.get("/prisma", async (req, res) => {
