@@ -250,6 +250,8 @@ export async function googleCallback(req: Request, res: Response) {
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
+      sameSite: "none",
+      secure: true,
     });
 
     res.redirect(`${clientUrl}/success-login?access_token=${accessToken}`);
