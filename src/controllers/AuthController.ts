@@ -151,10 +151,7 @@ export async function login(req: Request, res: Response) {
       data: { refreshToken },
     });
 
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      path: "/",
-    });
+    res.cookie("refreshToken", refreshToken);
 
     res.json({ accessToken });
   } catch (error) {
@@ -251,11 +248,7 @@ export async function googleCallback(req: Request, res: Response) {
       data: { refreshToken },
     });
 
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      maxAge: 60 * 60 * 24 * 1000,
-      path: "/",
-    });
+    res.cookie("refreshToken", refreshToken);
 
     res.redirect(`${clientUrl}/success-login?access_token=${accessToken}`);
   } catch (error: any) {

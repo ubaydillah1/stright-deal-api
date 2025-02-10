@@ -43,6 +43,11 @@ app.get("/prisma", async (req, res) => {
   }
 });
 
+app.get("/callback", (req, res) => {
+  res.cookie("name", "name");
+  res.redirect("https://testing-s-deal-vercel.vercel.app");
+});
+
 app.get("*", (req: Request, res: Response) => {
   res.json({
     Error: "Not Found",
