@@ -253,7 +253,7 @@ export async function googleCallback(req: Request, res: Response) {
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: true,
+      secure: false,
     });
 
     res.redirect(`${clientUrl}/success-login?token=${accessToken}`);
