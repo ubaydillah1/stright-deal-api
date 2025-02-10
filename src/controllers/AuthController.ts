@@ -253,12 +253,9 @@ export async function googleCallback(req: Request, res: Response) {
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      path: "/",
     });
 
-    res.redirect(`${clientUrl}/success-login?token=${accessToken}`);
+    res.redirect(`${clientUrl}/success-login?access_token=${accessToken}`);
   } catch (error: any) {
     return res.redirect(
       `${clientUrl}/failed-login?error=${encodeURIComponent(error.message)}`
