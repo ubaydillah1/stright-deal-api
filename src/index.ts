@@ -4,23 +4,24 @@ import dashboardRouter from "./routes/dashboardRoutes";
 import authRouter from "./routes/authRoutes";
 import cors from "cors";
 import prisma from "./config/prismaClient";
+import cookieParser from "cookie-parser";
 
 const app = express();
 
 const PORT = process.env.PORT;
 const HOST = process.env.HOST;
 
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(
   cors({
-    origin: "*",
+    origin: ["http://localhost:5173"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   })
 );
-
 app.use("/api/auth", authRouter);
 app.use("/api/dashboard", dashboardRouter);
 

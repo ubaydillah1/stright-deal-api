@@ -86,22 +86,24 @@ enum PlannedSaleTimeline {
 }
 
 model User {
-  id              String        @id @default(uuid())
-  email           String        @unique
-  firstName       String
-  lastName        String
-  password        String?
-  phoneNumber     String?
-  otpToken        String?
-  expiredOtpToken DateTime?
-  refreshToken    String
-  provider        Provider      @default(Local)
-  avatar          String
-  role            Role          @default(Visitor)
-  activityLogs    ActivityLog[]
-  Cars            Car[]
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id                String        @id @default(uuid())
+  email             String        @unique
+  firstName         String
+  lastName          String
+  password          String?
+  isVerified        Boolean       @default(false)
+  verificationToken String?
+  phoneNumber       String?
+  otpToken          String?
+  expiredOtpToken   DateTime?
+  refreshToken      String?
+  provider          Provider      @default(Local)
+  avatar            String?
+  role              Role          @default(Visitor)
+  activityLogs      ActivityLog[]
+  Cars              Car[]
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 
   @@map("users")
 }
