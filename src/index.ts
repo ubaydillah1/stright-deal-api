@@ -44,7 +44,12 @@ app.get("/prisma", async (req, res) => {
 });
 
 app.get("/callback", (req, res) => {
-  res.cookie("name", "name");
+  res.cookie("name", "name", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+  });
+
   res.redirect("https://testing-s-deal-vercel.vercel.app");
 });
 
