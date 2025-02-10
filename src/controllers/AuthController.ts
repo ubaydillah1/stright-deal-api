@@ -153,9 +153,8 @@ export async function login(req: Request, res: Response) {
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
+      path: "/",
     });
-
-    console.log("Cookie terkirim");
 
     res.json({ accessToken });
   } catch (error) {
@@ -255,6 +254,7 @@ export async function googleCallback(req: Request, res: Response) {
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       maxAge: 60 * 60 * 24 * 1000,
+      path: "/",
     });
 
     res.redirect(`${clientUrl}/success-login?access_token=${accessToken}`);
