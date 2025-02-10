@@ -252,8 +252,10 @@ export async function googleCallback(req: Request, res: Response) {
       data: { refreshToken },
     });
 
-    res.cookie("refreshToken", refreshToken, {
+    res.cookie("nama_cookie", "nilai_cookie", {
       httpOnly: true,
+      secure: true,
+      sameSite: "none",
     });
 
     console.log("Berhasil Callback dan set cookie");
