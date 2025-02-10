@@ -130,7 +130,7 @@ router.get(
   }
 );
 
-router.post("/google", async function (req: Request, res: Response) {
+router.get("/google", async function (req: Request, res: Response) {
   const redirectUrl = `${serverUrl}/api/auth/google/callback`;
 
   const oAuth2Client = new OAuth2Client(
