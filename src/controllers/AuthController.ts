@@ -252,8 +252,14 @@ export async function googleCallback(req: Request, res: Response) {
     });
 
     res.cookie("refreshToken", refreshToken, {
-      httpOnly: false,
+      httpOnly: false, // Memungkinkan JavaScript untuk mengakses cookie
+      secure: false, // Tidak mengharuskan HTTPS (boleh digunakan di HTTP biasa)
+      sameSite: "lax", // Lebih longgar dalam hal pengaturan pengiriman cookie lintas situs
+      maxAge: 24 * 60 * 60 * 1000, // Masa berlaku 1 hari (dalam milidetik)
+      path: "/", // Cookie akan berlaku untuk seluruh situs
     });
+
+    console.log("Berhasil Callback dan set cookie");
 
     res.redirect(`${clientUrl}/success-login?access_token=${accessToken}`);
   } catch (error: any) {
