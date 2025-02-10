@@ -24,4 +24,16 @@ router.get("/verify-email", AuthController.verifyEmail);
 router.get("/google", AuthController.googleAuth);
 router.get("/google/callback", AuthController.googleCallback);
 
+// Get token from cookies
+router.get("/get-token-cookies", (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+
+  if (!refreshToken) {
+    res.status(401).json({ error: "No refresh token found" });
+    return;
+  }
+
+  res.json({ refreshToken });
+});
+
 export default router;

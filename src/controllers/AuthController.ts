@@ -248,7 +248,9 @@ export async function googleCallback(req: Request, res: Response) {
       data: { refreshToken },
     });
 
-    res.cookie("refreshToken", refreshToken);
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+    });
 
     res.redirect(`${clientUrl}/success-login?access_token=${accessToken}`);
   } catch (error: any) {
