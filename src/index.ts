@@ -22,7 +22,7 @@ app.use(
       "https://straight-deal.webflow.io",
       "http://127.0.0.1:5500/",
     ],
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   })
