@@ -19,7 +19,7 @@ router.post("/logout", AuthController.logout);
 
 // Email verification after register
 router.get("/verify-email", AuthController.verifyEmail);
-router.get(
+router.post(
   "/resend-verification-email",
   AuthController.resendVerificationEmail
 );
