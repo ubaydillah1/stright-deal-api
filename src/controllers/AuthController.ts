@@ -8,7 +8,6 @@ import "dotenv/config";
 import bcrypt from "bcrypt";
 import { v4 } from "uuid";
 import emailService from "../utils/emailService";
-import { urlToHttpOptions } from "url";
 
 const serverUrl = process.env.SERVER_URL;
 const clientUrl = process.env.CLIENT_URL;
