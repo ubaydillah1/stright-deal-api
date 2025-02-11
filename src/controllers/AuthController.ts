@@ -8,6 +8,7 @@ import "dotenv/config";
 import bcrypt from "bcrypt";
 import { v4 } from "uuid";
 import emailService from "../utils/emailService";
+import { urlToHttpOptions } from "url";
 
 const serverUrl = process.env.SERVER_URL;
 const clientUrl = process.env.CLIENT_URL;
@@ -260,6 +261,16 @@ export async function googleCallback(req: Request, res: Response) {
       `${clientUrl}/failed-login?error=${encodeURIComponent(error.message)}`
     );
   }
+}
+export async function getTokenCookies(req: Request, res: Response) {
+  const refreshToken = req.cookies.refreshToken;
+
+  if (!refreshToken) {
+    res.status(401).json({ error: "No refresh token found" });
+    return;
+  }
+
+  res.json({ refreshToken });
 }
 
 export async function googleAuth(req: Request, res: Response) {
