@@ -19,6 +19,10 @@ router.post("/logout", AuthController.logout);
 
 // Email verification after register
 router.get("/verify-email", AuthController.verifyEmail);
+router.get(
+  "/resend-verification-email",
+  AuthController.resendVerificationEmail
+);
 
 // Google Auth
 router.get("/google", AuthController.googleAuth);

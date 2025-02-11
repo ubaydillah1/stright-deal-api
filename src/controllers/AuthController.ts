@@ -57,6 +57,60 @@ export async function verifyEmail(req: Request, res: Response) {
   });
 }
 
+export async function resendVerificationEmail(req: Request, res: Response) {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      res.status(400).json({ message: "Email is required" });
+      return;
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    if (user.isVerified) {
+      res.status(400).json({
+        message: "Email is already verified. You can log in now.",
+      });
+      return;
+    }
+
+    const newVerificationToken = v4();
+
+    await prisma.user.update({
+      where: { email },
+      data: { verificationToken: newVerificationToken },
+    });
+
+    const verificationUrl = `${serverUrl}/api/auth/verify-email?token=${newVerificationToken}`;
+
+    const mailOptions = {
+      from: process.env.AUTH_EMAIL,
+      to: email,
+      subject: "Resend Verification Email",
+      text: `Click the link below to verify your email: ${verificationUrl}`,
+    };
+
+    await emailService.sendMail(mailOptions);
+
+    res.json({
+      message: "Verification email resent. Please check your email.",
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      message: "Internal server error",
+    });
+    return;
+  }
+}
+
 export async function register(req: Request, res: Response) {
   const { firstName, lastName, email, password } = req.body;
 
@@ -65,14 +119,23 @@ export async function register(req: Request, res: Response) {
   });
 
   if (existingUser) {
-    res.status(400).json({
-      message: "Email is already in use",
-    });
+    if (existingUser.isVerified) {
+      res.status(400).json({
+        message: "Email is already in use",
+      });
+    }
+
+    if (!existingUser.isVerified) {
+      res.status(400).json({
+        message:
+          "Email already registered but not verified. Please check your email.",
+      });
+    }
+
     return;
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
-
   const verificationToken = v4();
 
   await prisma.user.create({
