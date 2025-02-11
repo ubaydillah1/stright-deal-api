@@ -287,6 +287,7 @@ export async function googleCallback(req: Request, res: Response) {
           phoneNumber: "",
           refreshToken: "",
           provider: "Google",
+          isVerified: true,
         },
       });
     }
