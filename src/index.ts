@@ -20,6 +20,7 @@ app.use(
       "http://localhost:5173",
       "https://testing-s-deal-vercel.vercel.app",
       "https://straight-deal.webflow.io",
+      "http://127.0.0.1:5500/",
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
