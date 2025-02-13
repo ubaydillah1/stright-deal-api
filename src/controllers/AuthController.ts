@@ -39,11 +39,6 @@ export const getOtp = async (req: Request, res: Response) => {
       res.status(404).json({ message: "User not found" });
       return;
     }
-    
-    if (!user.isVerified) {
-      res.status(403).json({ message: "User not verified" });
-      return;
-    }
 
     const otp = generateOtp();
     const expiredAt = getOtpExpiration();
@@ -222,6 +217,12 @@ export async function login(req: Request, res: Response) {
 
     if (!existingUser) {
       res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+
+    if (!existingUser.isVerified) {
+      res.status(403).json({ message: "User not verified" });
       return;
     }
 
