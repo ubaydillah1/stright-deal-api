@@ -267,7 +267,7 @@ export async function login(req: Request, res: Response) {
       path: "/",
     });
 
-    res.json({ accessToken });
+    res.json({ accessToken, refreshToken });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal server error" });
