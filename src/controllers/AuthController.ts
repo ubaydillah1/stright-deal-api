@@ -220,7 +220,6 @@ export async function login(req: Request, res: Response) {
       return;
     }
 
-
     if (!existingUser.isVerified) {
       res.status(403).json({ message: "User not verified" });
       return;
@@ -258,7 +257,12 @@ export async function login(req: Request, res: Response) {
       data: { refreshToken },
     });
 
-    res.cookie("refreshToken", refreshToken);
+    res.cookie("refreshToken", refreshToken, {
+      domain: clientUrl,
+      sameSite: "none",
+      secure: true,
+      httpOnly: true,
+    });
 
     res.json({ accessToken });
   } catch (error) {
@@ -364,11 +368,10 @@ export async function googleCallback(req: Request, res: Response) {
 
     res.redirect(`${clientUrl}/success-login?access_token=${accessToken}`);
   } catch (error: any) {
-    return res.redirect(
-      `${clientUrl}/failed-login?error=${encodeURIComponent(error.message)}`
-    );
+    return res.redirect(`${clientUrl}/failed-login?error=${error.message}`);
   }
 }
+
 export async function getTokenCookies(req: Request, res: Response) {
   const refreshToken = req.cookies.refreshToken;
 
@@ -414,6 +417,18 @@ export async function forgotPassword(req: Request, res: Response) {
       return;
     }
 
+    if (!user.isVerified) {
+      res.status(403).json({ message: "User not verified" });
+      return;
+    }
+
+    if (user.provider !== "Local") {
+      res.status(403).json({
+        message: "You cannot reset the password for a social login account",
+      });
+      return;
+    }
+
     const resetToken = v4();
     const resetTokenExpiry = new Date(Date.now() + 1000 * 60 * 30); // Expiry in 30 minutes
 
@@ -422,7 +437,7 @@ export async function forgotPassword(req: Request, res: Response) {
       data: { resetToken, resetTokenExpiry },
     });
 
-    const resetLink = `${serverUrl}/api/auth/reset-password/${resetToken}`;
+    const resetLink = `${serverUrl}/api/auth/reset-password?token=${resetToken}`;
 
     const mailOptions = {
       from: process.env.AUTH_EMAIL,
@@ -442,10 +457,17 @@ export async function forgotPassword(req: Request, res: Response) {
 }
 
 export async function getResetPasswordPage(req: Request, res: Response) {
-  const { token } = req.params;
+  const { token } = req.query;
+
+  if (!token) {
+    res.status(400).json({
+      message: "Invalid token",
+    });
+    return;
+  }
 
   const user = await prisma.user.findFirst({
-    where: { resetToken: token },
+    where: { resetToken: token as string },
   });
 
   if (!user) {

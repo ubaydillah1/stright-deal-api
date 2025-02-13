@@ -21,7 +21,7 @@ router.delete("/logout", AuthController.logout);
 
 // Reset Password
 router.post("/forgot-password", AuthController.forgotPassword);
-router.get("/reset-password/:token", AuthController.getResetPasswordPage);
+router.get("/reset-password", AuthController.getResetPasswordPage);
 router.post("/reset-password", AuthController.resetPassword);
 
 // Email verification after register
