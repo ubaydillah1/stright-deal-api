@@ -259,7 +259,6 @@ export async function login(req: Request, res: Response) {
 
     res.json({ accessToken, refreshToken });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: "Internal server error" });
   }
 }
@@ -282,7 +281,7 @@ export async function googleCallback(req: Request, res: Response) {
   const code = req.query.code as string;
 
   if (!code) {
-    res.redirect(`${clientUrl}/failed-login?error=missing_code`);
+    res.redirect(`${clientUrl}/failed?status=login&error=missing_code`);
     return;
   }
 
@@ -301,13 +300,17 @@ export async function googleCallback(req: Request, res: Response) {
     const access_token = tokens.access_token;
 
     if (!access_token) {
-      return res.redirect(`${clientUrl}/failed-login?error=missing_token`);
+      return res.redirect(
+        `${clientUrl}/failed?status=login&error=missing_token`
+      );
     }
 
     const userProfil: UserGoogleProfile = await getUserGoogleData(access_token);
 
     if (!userProfil || !userProfil.email) {
-      return res.redirect(`${clientUrl}/failed-login?error=missing_email`);
+      return res.redirect(
+        `${clientUrl}/failed?status=login&error=missing_email`
+      );
     }
 
     let existingUser: User | null = await prisma.user.findUnique({
@@ -333,7 +336,9 @@ export async function googleCallback(req: Request, res: Response) {
     }
 
     if (!existingUser || !existingUser.id) {
-      return res.redirect(`${clientUrl}/failed-login?error=missing_user_id`);
+      return res.redirect(
+        `${clientUrl}/failed?status=login&error=missing_user_id`
+      );
     }
 
     const accessToken = generateAccessToken({
@@ -359,9 +364,13 @@ export async function googleCallback(req: Request, res: Response) {
       secure: true,
     });
 
-    res.redirect(`${clientUrl}/success-login?access_token=${accessToken}`);
+    res.redirect(
+      `${clientUrl}/success?status=login&access_token=${accessToken}`
+    );
   } catch (error: any) {
-    return res.redirect(`${clientUrl}/failed-login?error=${error.message}`);
+    return res.redirect(
+      `${clientUrl}/failed?status=login&error=${error.message}`
+    );
   }
 }
 
