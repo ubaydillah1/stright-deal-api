@@ -93,10 +93,12 @@ model User {
   password          String?
   isVerified        Boolean       @default(false)
   verificationToken String?
-  phoneNumber       String?
+  phoneNumber       String?       @unique
   otpToken          String?
   expiredOtpToken   DateTime?
   refreshToken      String?
+  resetToken        String?
+  resetTokenExpiry  DateTime?
   provider          Provider      @default(Local)
   avatar            String?
   role              Role          @default(Visitor)
@@ -110,8 +112,8 @@ model User {
 
 model Car {
   id                       String                   @id @default(uuid())
-  user                     User?                    @relation(fields: [userId], references: [id])
-  userId                   String?
+  user                     User                     @relation(fields: [userId], references: [id])
+  userId                   String
   // owner Type
   slug                     String
   vin                      String?
@@ -154,11 +156,11 @@ model CarImage {
 }
 
 model ActivityLog {
-  id     String  @id @default(uuid())
-  Car    Car?    @relation(fields: [carId], references: [id])
-  carId  String?
-  User   User?   @relation(fields: [userId], references: [id])
-  userId String?
+  id     String @id @default(uuid())
+  Car    Car    @relation(fields: [carId], references: [id])
+  carId  String
+  User   User   @relation(fields: [userId], references: [id])
+  userId String
 
   @@map("activity_logs")
 }

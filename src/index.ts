@@ -5,6 +5,8 @@ import authRouter from "./routes/authRoutes";
 import cors from "cors";
 import prisma from "./config/prismaClient";
 import cookieParser from "cookie-parser";
+// import { supabase } from "./config/supabaseClient";
+// import "./utils/seed";
 
 const app = express();
 
@@ -47,17 +49,18 @@ app.get("/prisma", async (req, res) => {
   }
 });
 
-// testing
+// const getBucketInfo = async () => {
+//   const { data, error } = await supabase.storage.listBuckets();
 
-app.get("/callback", (req, res) => {
-  res.cookie("name", "name", {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-  });
+//   if (error) {
+//     console.error("Error fetching bucket:", error);
+//     return;
+//   }
 
-  res.redirect("https://testing-s-deal-vercel.vercel.app");
-});
+//   console.log("Bucket data:", data);
+// };
+
+// getBucketInfo();
 
 app.get("*", (req: Request, res: Response) => {
   res.json({

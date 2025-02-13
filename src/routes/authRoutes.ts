@@ -4,6 +4,7 @@ import { validateRequest } from "../middlewares/validateRequest";
 
 const router = express.Router();
 
+// Auth local
 router.post(
   "/register",
   validateRequest(["firstName", "lastName", "email", "password"]),
@@ -15,7 +16,13 @@ router.post(
   validateRequest(["email", "password"]),
   AuthController.login
 );
+
 router.post("/logout", AuthController.logout);
+
+// Reset Password
+router.post("/forgot-password", AuthController.forgotPassword);
+router.get("/reset-password/:token", AuthController.getResetPasswordPage);
+router.post("/reset-password", AuthController.resetPassword);
 
 // Email verification after register
 router.get("/verify-email", AuthController.verifyEmail);
@@ -30,5 +37,12 @@ router.get("/google/callback", AuthController.googleCallback);
 
 // Get token from cookies
 router.get("/get-token-cookies", AuthController.getTokenCookies);
+
+// Get OTP
+router.post(
+  "/get-otp",
+  validateRequest(["phoneNumber"]),
+  AuthController.getOtp
+);
 
 export default router;

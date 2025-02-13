@@ -8,6 +8,11 @@ import "dotenv/config";
 import bcrypt from "bcrypt";
 import { v4 } from "uuid";
 import emailService from "../utils/emailService";
+import {
+  generateOtp,
+  getOtpExpiration,
+  sendOtpMessage,
+} from "../utils/otpUtils";
 
 const serverUrl = process.env.SERVER_URL;
 const clientUrl = process.env.CLIENT_URL;
@@ -21,6 +26,39 @@ interface UserGoogleProfile {
   email: string;
   email_verified: boolean;
 }
+
+export const getOtp = async (req: Request, res: Response) => {
+  try {
+    const { phoneNumber } = req.body;
+
+    const user = await prisma.user.findUnique({
+      where: { phoneNumber },
+    });
+
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    const otp = generateOtp();
+    const expiredAt = getOtpExpiration();
+
+    await prisma.user.update({
+      where: { phoneNumber },
+      data: {
+        otpToken: otp,
+        expiredOtpToken: expiredAt,
+      },
+    });
+
+    // Kirim OTP lewat Twilio (menggunakan utils)
+    await sendOtpMessage(phoneNumber, otp);
+
+    res.json({ message: "OTP sent successfully", expiresAt: expiredAt });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to send OTP", error });
+  }
+};
 
 export async function verifyEmail(req: Request, res: Response) {
   const { token } = req.query;
@@ -355,4 +393,89 @@ export async function googleAuth(req: Request, res: Response) {
   });
 
   res.json({ url: authorizeUrl });
+}
+
+export async function forgotPassword(req: Request, res: Response) {
+  const { email } = req.body;
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    const resetToken = v4();
+    const resetTokenExpiry = new Date(Date.now() + 1000 * 60 * 30); // Expiry in 30 minutes
+
+    await prisma.user.update({
+      where: { email },
+      data: { resetToken, resetTokenExpiry },
+    });
+
+    const resetLink = `${serverUrl}/api/auth/reset-password/${resetToken}`;
+
+    const mailOptions = {
+      from: process.env.AUTH_EMAIL,
+      to: email,
+      subject: "Password Reset",
+      text: `Click the link to reset your password: ${resetLink}`,
+    };
+
+    await emailService.sendMail(mailOptions);
+
+    res.json({
+      message: "Password reset link sent. Please check your email.",
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+export async function getResetPasswordPage(req: Request, res: Response) {
+  const { token } = req.params;
+
+  const user = await prisma.user.findFirst({
+    where: { resetToken: token },
+  });
+
+  if (!user) {
+    res.status(400).json({ message: "Invalid or expired token." });
+    return;
+  }
+
+  res.json({ message: "Token is valid. Proceed to reset password." });
+}
+
+export async function resetPassword(req: Request, res: Response) {
+  const { token, newPassword } = req.body;
+
+  try {
+    const user = await prisma.user.findFirst({
+      where: { resetToken: token, resetTokenExpiry: { gte: new Date() } },
+    });
+
+    if (!user) {
+      res.status(400).json({ message: "Invalid or expired token" });
+      return;
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        resetToken: null,
+        resetTokenExpiry: null,
+      },
+    });
+
+    res.json({ message: "Password has been reset successfully." });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
 }
