@@ -257,16 +257,6 @@ export async function login(req: Request, res: Response) {
       data: { refreshToken },
     });
 
-    console.log("Sampe sini");
-
-    res.cookie("refreshToken", refreshToken, {
-      domain: process.env.DOMAIN,
-      sameSite: "none",
-      secure: true,
-      httpOnly: true,
-      path: "/",
-    });
-
     res.json({ accessToken, refreshToken });
   } catch (error) {
     console.error(error);
