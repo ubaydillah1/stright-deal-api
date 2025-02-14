@@ -13,6 +13,7 @@ import {
   getOtpExpiration,
   sendOtpMessage,
 } from "../utils/otpUtils";
+import { sendEmail } from "../utils/emailServiceSand";
 
 const serverUrl = process.env.SERVER_URL;
 const clientUrl = process.env.CLIENT_URL;
@@ -46,8 +47,8 @@ export const getOtp = async (req: Request, res: Response) => {
     await prisma.user.update({
       where: { phoneNumber },
       data: {
-        otpToken: otp,
-        expiredOtpToken: expiredAt,
+        phoneOtpToken: otp,
+        expiredPhoneOtpToken: expiredAt,
       },
     });
 
@@ -61,90 +62,100 @@ export const getOtp = async (req: Request, res: Response) => {
 };
 
 export async function verifyEmail(req: Request, res: Response) {
-  const { token } = req.query;
+  const { email, otp } = req.body;
 
-  if (!token) {
-    res.status(400).json({
-      message: "Invalid token",
-    });
-    return;
-  }
-
-  const user = await prisma.user.findFirst({
-    where: { verificationToken: token as string },
-  });
-
-  if (!user) {
-    res.status(400).json({
-      message: "Invalid or expired token",
-    });
-    return;
-  }
-
-  await prisma.user.update({
-    where: { id: user.id },
-    data: {
-      isVerified: true,
-      verificationToken: null,
-    },
-  });
-
-  res.json({
-    message: "Email verified successfully!",
-  });
-}
-
-export async function resendVerificationEmail(req: Request, res: Response) {
   try {
-    const { email } = req.body;
-
-    if (!email) {
-      res.status(400).json({ message: "Email is required" });
-      return;
-    }
-
     const user = await prisma.user.findUnique({
       where: { email },
     });
 
     if (!user) {
-      res.status(404).json({ message: "User not found" });
+      res.status(404).json({ message: "Email not found" });
       return;
     }
 
     if (user.isVerified) {
-      res.status(400).json({
-        message: "Email is already verified. You can log in now.",
+      res.status(400).json({ message: "Email already verified" });
+      return;
+    }
+
+    if (user.provider !== "Local") {
+      res.status(403).json({
+        message: "You cannot reset the password for a social login account",
       });
       return;
     }
 
-    const newVerificationToken = v4();
+    if (user.emailOtpToken !== otp) {
+      res.status(400).json({ message: "Invalid OTP" });
+      return;
+    }
+
+    if (user.expiredEmailOtpToken && user.expiredEmailOtpToken < new Date()) {
+      res.status(400).json({ message: "OTP has expired" });
+      return;
+    }
 
     await prisma.user.update({
       where: { email },
-      data: { verificationToken: newVerificationToken },
+      data: {
+        isVerified: true,
+        emailOtpToken: null,
+        expiredEmailOtpToken: null,
+      },
     });
 
-    const verificationUrl = `${serverUrl}/api/auth/verify-email?token=${newVerificationToken}`;
-
-    const mailOptions = {
-      from: process.env.AUTH_EMAIL,
-      to: email,
-      subject: "Resend Verification Email",
-      text: `Click the link below to verify your email: ${verificationUrl}`,
-    };
-
-    await emailService.sendMail(mailOptions);
-
-    res.json({
-      message: "Verification email resent. Please check your email.",
-    });
-  } catch (error: any) {
+    res.json({ message: "Email verified successfully" });
+  } catch (error: unknown) {
+    const e = error as Error;
     res.status(500).json({
-      message: "Internal server error",
+      message: e.message,
     });
-    return;
+  }
+}
+
+export async function resendVerificationEmail(req: Request, res: Response) {
+  const { email } = req.body;
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      res.status(404).json({ message: "Email not found" });
+      return;
+    }
+
+    if (user.provider !== "Local") {
+      res.status(403).json({
+        message: "You cannot reset the password for a social login account",
+      });
+      return;
+    }
+
+    if (user.isVerified) {
+      res.status(400).json({ message: "Email is already verified" });
+      return;
+    }
+
+    const emailOtpToken = generateOtp();
+    const expiredEmailOtpToken = getOtpExpiration();
+
+    await prisma.user.update({
+      where: { email },
+      data: { emailOtpToken, expiredEmailOtpToken },
+    });
+
+    await sendEmail(
+      email,
+      "Resend Email Verification",
+      `<p>Your OTP code is <strong>${emailOtpToken}</strong>. This code is valid for 10 minutes.</p>`
+    );
+
+    res.json({ message: "Verification email resent successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to resend verification email" });
   }
 }
 
@@ -160,20 +171,20 @@ export async function register(req: Request, res: Response) {
       res.status(400).json({
         message: "Email is already in use",
       });
+      return;
     }
 
-    if (!existingUser.isVerified) {
-      res.status(400).json({
-        message:
-          "Email already registered but not verified. Please check your email.",
-      });
-    }
-
+    res.status(400).json({
+      message:
+        "Email already registered but not verified. Please check your email.",
+    });
     return;
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
-  const verificationToken = v4();
+
+  const otp = generateOtp();
+  const otpExpiry = getOtpExpiration();
 
   await prisma.user.create({
     data: {
@@ -181,24 +192,20 @@ export async function register(req: Request, res: Response) {
       firstName,
       lastName,
       password: hashedPassword,
-      verificationToken,
+      emailOtpToken: otp,
+      expiredEmailOtpToken: otpExpiry,
     },
   });
 
-  const verificationUrl = `${serverUrl}/api/auth/verify-email?token=${verificationToken}`;
-
-  const mailOptions = {
-    from: process.env.AUTH_EMAIL,
-    to: email,
-    subject: "Email Verification",
-    text: `Please verify your email by clicking the following link: ${verificationUrl}`,
-  };
-
   try {
-    await emailService.sendMail(mailOptions);
+    await sendEmail(
+      email,
+      "Email Verification Code",
+      `<p>Your OTP code for verification is: <strong>${otp}</strong></p>`
+    );
+
     res.json({
-      message:
-        "Registration successful. Please check your email for verification.",
+      message: "Registration successful. Please check your email for the OTP.",
     });
   } catch (error) {
     res.status(500).json({
@@ -324,11 +331,6 @@ export async function googleCallback(req: Request, res: Response) {
           avatar: userProfil.picture,
           firstName: userProfil.given_name,
           lastName: userProfil.family_name,
-          password: "",
-          expiredOtpToken: new Date(),
-          otpToken: "",
-          phoneNumber: "",
-          refreshToken: "",
           provider: "Google",
           isVerified: true,
         },

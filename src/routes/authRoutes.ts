@@ -20,14 +20,23 @@ router.post(
 router.delete("/logout", AuthController.logout);
 
 // Reset Password
-router.post("/forgot-password", AuthController.forgotPassword);
+router.post(
+  "/forgot-password",
+  validateRequest(["email"]),
+  AuthController.forgotPassword
+);
 router.get("/reset-password", AuthController.getResetPasswordPage);
 router.post("/reset-password", AuthController.resetPassword);
 
 // Email verification after register
-router.get("/verify-email", AuthController.verifyEmail);
+router.post(
+  "/verify-email",
+  validateRequest(["email", "otp"]),
+  AuthController.verifyEmail
+);
 router.post(
   "/resend-verification-email",
+  validateRequest(["email"]),
   AuthController.resendVerificationEmail
 );
 

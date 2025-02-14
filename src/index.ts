@@ -5,6 +5,7 @@ import authRouter from "./routes/authRoutes";
 import cors from "cors";
 import prisma from "./config/prismaClient";
 import cookieParser from "cookie-parser";
+import { sendEmail } from "./utils/emailServiceSand";
 // import { supabase } from "./config/supabaseClient";
 // import "./utils/seed";
 
