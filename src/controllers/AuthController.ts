@@ -14,6 +14,7 @@ import {
   sendOtpMessage,
 } from "../utils/otpUtils";
 import { sendEmail } from "../utils/emailServiceSand";
+import getAccessTokenFromRefreshToken from "../utils/getAccessTokenFromRefreshToken";
 
 const serverUrl = process.env.SERVER_URL;
 const clientUrl = process.env.CLIENT_URL;
@@ -527,4 +528,22 @@ export async function resetPassword(req: Request, res: Response) {
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
   }
+}
+
+export async function refreshTokenHandler(req: Request, res: Response) {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+    res.status(400).json({ message: "Refresh token is required" });
+    return;
+  }
+
+  const result = await getAccessTokenFromRefreshToken(refreshToken);
+
+  if (!result) {
+    res.status(403).json({ message: "Invalid or expired refresh token" });
+    return;
+  }
+
+  res.json({ accessToken: result.accessToken });
 }

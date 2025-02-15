@@ -1,6 +1,7 @@
 import express from "express";
 import * as AuthController from "./../controllers/AuthController";
 import { validateRequest } from "../middlewares/validateRequest";
+import { authenticateToken } from "../middlewares/authenticateToken";
 
 const router = express.Router();
 
@@ -32,11 +33,13 @@ router.post("/reset-password", AuthController.resetPassword);
 router.post(
   "/verify-email",
   validateRequest(["email", "otp"]),
+  authenticateToken,
   AuthController.verifyEmail
 );
 router.post(
   "/resend-verification-email",
   validateRequest(["email"]),
+  authenticateToken,
   AuthController.resendVerificationEmail
 );
 
@@ -53,5 +56,8 @@ router.post(
   validateRequest(["phoneNumber"]),
   AuthController.getOtp
 );
+
+// Get Access token from Refresh token
+router.post("/refresh-token", AuthController.refreshTokenHandler);
 
 export default router;
