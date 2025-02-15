@@ -33,13 +33,11 @@ router.post("/reset-password", AuthController.resetPassword);
 router.post(
   "/verify-email",
   validateRequest(["email", "otp"]),
-  authenticateToken,
   AuthController.verifyEmail
 );
 router.post(
   "/resend-verification-email",
   validateRequest(["email"]),
-  authenticateToken,
   AuthController.resendVerificationEmail
 );
 
