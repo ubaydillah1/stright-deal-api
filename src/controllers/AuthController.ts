@@ -36,24 +36,25 @@ export const getOtp = async (req: Request, res: Response) => {
       where: { phoneNumber },
     });
 
-    if (!user) {
-      res.status(404).json({ message: "User not found" });
-      return;
-    }
+    // if (!user) {
+    //   res.status(404).json({ message: "User not found" });
+    //   return;
+    // }
 
     const otp = generateOtp();
     const expiredAt = getOtpExpiration();
 
-    await prisma.user.update({
-      where: { phoneNumber },
-      data: {
-        phoneOtpToken: otp,
-        expiredPhoneOtpToken: expiredAt,
-      },
-    });
+    // await prisma.user.update({
+    //   where: { phoneNumber },
+    //   data: {
+    //     phoneOtpToken: otp,
+    //     expiredPhoneOtpToken: expiredAt,
+    //   },
+    // });
 
     // Kirim OTP lewat Twilio (menggunakan utils)
-    await sendOtpMessage(phoneNumber, otp);
+    const message = await sendOtpMessage(phoneNumber, otp);
+    console.log("SID : " + message.sid);
 
     res.json({ message: "OTP sent successfully", expiresAt: expiredAt });
   } catch (error) {
@@ -169,14 +170,13 @@ export async function register(req: Request, res: Response) {
   if (existingUser) {
     if (existingUser.isVerified) {
       res.status(400).json({
-        message: "Email is already in use",
+        message: "email is already in use",
       });
       return;
     }
 
     res.status(400).json({
-      message:
-        "Email already registered but not verified. Please check your email.",
+      message: "email is already registered but not verifiy",
     });
     return;
   }
@@ -209,7 +209,7 @@ export async function register(req: Request, res: Response) {
     });
   } catch (error) {
     res.status(500).json({
-      message: "Error sending verification email.",
+      message: "Internal server error.",
     });
   }
 }

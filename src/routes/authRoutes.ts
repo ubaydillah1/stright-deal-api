@@ -49,7 +49,7 @@ router.get("/get-token-cookies", AuthController.getTokenCookies);
 
 // Get OTP
 router.post(
-  "/get-otp",
+  "/get-phone-otp",
   validateRequest(["phoneNumber"]),
   AuthController.getOtp
 );

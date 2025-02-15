@@ -9,6 +9,24 @@ import { sendEmail } from "./utils/emailServiceSand";
 // import { supabase } from "./config/supabaseClient";
 // import "./utils/seed";
 
+import twilio from "twilio";
+
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+const client = twilio(accountSid, authToken);
+
+async function createMessage() {
+  const message = await client.messages.create({
+    body: "This is the ship that made the Kessel Run in fourteen parsecs?",
+    from: "+19125134149",
+    to: "+15558675310",
+  });
+
+  console.log(message.body);
+}
+
+createMessage();
+
 const app = express();
 
 const PORT = process.env.PORT;
