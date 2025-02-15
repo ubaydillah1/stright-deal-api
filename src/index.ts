@@ -53,6 +53,20 @@ app.use(
 app.use("/api/auth", authRouter);
 app.use("/api/dashboard", dashboardRouter);
 
+app.get("/delete-users", async (req, res) => {
+  try {
+    const allUsers = await prisma.user.deleteMany();
+    res.json({
+      message: "User has been deleted",
+    });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+});
+
 app.get("/prisma", async (req, res) => {
   try {
     const allUsers = await prisma.user.findMany();
