@@ -57,8 +57,11 @@ export const getOtp = async (req: Request, res: Response) => {
     console.log("SID : " + message.sid);
 
     res.json({ message: "OTP sent successfully", expiresAt: expiredAt });
-  } catch (error) {
-    res.status(500).json({ message: "Failed to send OTP", error });
+  } catch (err) {
+    const error = err as Error;
+    res
+      .status(500)
+      .json({ message: "Failed to send OTP", error: error.message });
   }
 };
 
