@@ -166,54 +166,68 @@ export async function resendVerificationEmail(req: Request, res: Response) {
 export async function register(req: Request, res: Response) {
   const { firstName, lastName, email, password } = req.body;
 
-  const existingUser = await prisma.user.findUnique({
-    where: { email },
-  });
+  try {
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
 
-  if (existingUser) {
-    if (existingUser.isVerified) {
-      res.status(400).json({
-        message: "email is already in use",
-      });
+    if (existingUser) {
+      if (existingUser.isVerified) {
+        res.status(400).json({ message: "Email is already in use" });
+        return;
+      }
+      res
+        .status(400)
+        .json({ message: "Email is already registered but not verified" });
       return;
     }
 
-    res.status(400).json({
-      message: "email is already registered but not verifiy",
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const otp = generateOtp();
+    const otpExpiry = getOtpExpiration();
+
+    const newUser = await prisma.user.create({
+      data: {
+        email,
+        firstName,
+        lastName,
+        password: hashedPassword,
+        emailOtpToken: otp,
+        expiredEmailOtpToken: otpExpiry,
+      },
     });
-    return;
-  }
 
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  const otp = generateOtp();
-  const otpExpiry = getOtpExpiration();
-
-  await prisma.user.create({
-    data: {
-      email,
-      firstName,
-      lastName,
-      password: hashedPassword,
-      emailOtpToken: otp,
-      expiredEmailOtpToken: otpExpiry,
-    },
-  });
-
-  try {
     await sendEmail(
       email,
       "Email Verification Code",
       `<p>Your OTP code for verification is: <strong>${otp}</strong></p>`
     );
 
+    const accessToken = generateAccessToken({
+      id: newUser.id,
+      email: newUser.email,
+      role: newUser.role,
+    });
+
+    const refreshToken = generateRefreshToken({
+      id: newUser.id,
+      email: newUser.email,
+      role: newUser.role,
+    });
+
+    await prisma.user.update({
+      where: { id: newUser.id },
+      data: { refreshToken },
+    });
+
     res.json({
       message: "Registration successful. Please check your email for the OTP.",
+      accessToken,
+      refreshToken,
     });
   } catch (error) {
-    res.status(500).json({
-      message: "Internal server error.",
-    });
+    res.status(500).json({ message: "Internal server error." });
   }
 }
 
