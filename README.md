@@ -21,10 +21,3 @@ Before you begin, ensure you have the following installed:
 
 - Node.js (v16 or higher recommended)  
 - npm or Yarn (package manager)  
-
-### Steps  
-
-#### 1️⃣ Clone the repository  
-```bash
-git clone https://github.com/your-repo/stright-deal-api.git  
-cd stright-deal-api  
