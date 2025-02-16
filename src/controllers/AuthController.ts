@@ -99,12 +99,12 @@ export async function verifyEmail(req: Request, res: Response) {
     });
 
     if (!user) {
-      res.status(404).json({ message: "email not found" });
+      res.status(404).json({ message: "Email not found" });
       return;
     }
 
     if (user.isVerified) {
-      res.status(400).json({ message: "email already verified" });
+      res.status(400).json({ message: "Email already verified" });
       return;
     }
 
@@ -121,9 +121,21 @@ export async function verifyEmail(req: Request, res: Response) {
     }
 
     if (user.expiredEmailOtpToken && user.expiredEmailOtpToken < new Date()) {
-      res.status(400).json({ message: "OTP has expired" });
+      res.status(403).json({ message: "OTP has expired" });
       return;
     }
+
+    const accessToken = generateAccessToken({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    });
+
+    const refreshToken = generateRefreshToken({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    });
 
     await prisma.user.update({
       where: { email },
@@ -131,10 +143,15 @@ export async function verifyEmail(req: Request, res: Response) {
         isVerified: true,
         emailOtpToken: null,
         expiredEmailOtpToken: null,
+        refreshToken,
       },
     });
 
-    res.json({ message: "email verified successfully" });
+    res.json({
+      message: "Email verified successfully",
+      accessToken,
+      refreshToken,
+    });
   } catch (error: unknown) {
     const e = error as Error;
     res.status(500).json({
