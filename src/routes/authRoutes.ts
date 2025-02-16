@@ -27,7 +27,11 @@ router.post(
   AuthController.forgotPassword
 );
 router.get("/reset-password", AuthController.getResetPasswordPage);
-router.post("/reset-password", AuthController.resetPassword);
+router.post(
+  "/reset-password",
+  validateRequest(["token", "newPassword"]),
+  AuthController.resetPassword
+);
 
 // Email verification after register
 router.post(
@@ -56,6 +60,10 @@ router.post(
 );
 
 // Get Access token from Refresh token
-router.post("/refresh-token", AuthController.refreshTokenHandler);
+router.post(
+  "/refresh-token",
+  validateRequest(["refreshToken"]),
+  AuthController.refreshTokenHandler
+);
 
 export default router;

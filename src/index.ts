@@ -55,7 +55,7 @@ app.use("/api/dashboard", dashboardRouter);
 
 app.get("/delete-users", async (req, res) => {
   try {
-    const allUsers = await prisma.user.deleteMany();
+    await prisma.user.deleteMany();
     res.json({
       message: "User has been deleted",
     });

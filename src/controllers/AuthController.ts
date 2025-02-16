@@ -15,6 +15,7 @@ import {
 } from "../utils/otpUtils";
 import { sendEmail } from "../utils/emailServiceSand";
 import getAccessTokenFromRefreshToken from "../utils/getAccessTokenFromRefreshToken";
+import { z } from "zod";
 
 const serverUrl = process.env.SERVER_URL;
 const clientUrl = process.env.CLIENT_URL;
@@ -28,6 +29,29 @@ interface UserGoogleProfile {
   email: string;
   email_verified: boolean;
 }
+
+const passwordSchema = z
+  .string()
+  .min(8, "password must be at least 8 characters")
+  .regex(/[A-Z]/, "password must contain at least one uppercase letter")
+  .regex(/[a-z]/, "password must contain at least one lowercase letter")
+  .regex(/\d/, "password must contain at least one number")
+  .regex(/[@$!%*?&]/, "password must contain at least one special character");
+
+const registerSchema = z.object({
+  firstName: z
+    .string()
+    .min(2)
+    .max(50)
+    .regex(/^[A-Za-z\s]+$/, "invalid name format"),
+  lastName: z
+    .string()
+    .min(2)
+    .max(50)
+    .regex(/^[A-Za-z\s]+$/, "invalid name format"),
+  email: z.string().email("invalid email format"),
+  password: passwordSchema,
+});
 
 export const getOtp = async (req: Request, res: Response) => {
   try {
@@ -75,18 +99,18 @@ export async function verifyEmail(req: Request, res: Response) {
     });
 
     if (!user) {
-      res.status(404).json({ message: "Email not found" });
+      res.status(404).json({ message: "email not found" });
       return;
     }
 
     if (user.isVerified) {
-      res.status(400).json({ message: "Email already verified" });
+      res.status(400).json({ message: "email already verified" });
       return;
     }
 
     if (user.provider !== "Local") {
       res.status(403).json({
-        message: "You cannot reset the password for a social login account",
+        message: "Email verification is not allowed for social login accounts",
       });
       return;
     }
@@ -110,7 +134,7 @@ export async function verifyEmail(req: Request, res: Response) {
       },
     });
 
-    res.json({ message: "Email verified successfully" });
+    res.json({ message: "email verified successfully" });
   } catch (error: unknown) {
     const e = error as Error;
     res.status(500).json({
@@ -134,7 +158,7 @@ export async function resendVerificationEmail(req: Request, res: Response) {
 
     if (user.provider !== "Local") {
       res.status(403).json({
-        message: "You cannot reset the password for a social login account",
+        message: "Email verification is not allowed for social login accounts",
       });
       return;
     }
@@ -165,26 +189,32 @@ export async function resendVerificationEmail(req: Request, res: Response) {
 }
 
 export async function register(req: Request, res: Response) {
-  const { firstName, lastName, email, password } = req.body;
-
   try {
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
+    const parsedBody = registerSchema.safeParse(req.body);
+    if (!parsedBody.success) {
+      res
+        .status(400)
+        .json({ message: "Invalid input", errors: parsedBody.error.format() });
+      return;
+    }
+
+    const { firstName, lastName, email, password } = parsedBody.data;
+
+    const existingUser = await prisma.user.findUnique({ where: { email } });
 
     if (existingUser) {
       if (existingUser.isVerified) {
-        res.status(400).json({ message: "Email is already in use" });
+        res.status(400).json({ message: "email is already in use" });
         return;
       }
+
       res
         .status(400)
-        .json({ message: "Email is already registered but not verified" });
+        .json({ message: "email is already registered but not verified" });
       return;
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const otp = generateOtp();
     const otpExpiry = getOtpExpiration();
 
@@ -222,7 +252,7 @@ export async function register(req: Request, res: Response) {
       data: { refreshToken },
     });
 
-    res.json({
+    res.status(201).json({
       message: "Registration successful. Please check your email for the OTP.",
       accessToken,
       refreshToken,
@@ -479,31 +509,43 @@ export async function forgotPassword(req: Request, res: Response) {
 }
 
 export async function getResetPasswordPage(req: Request, res: Response) {
-  const { token } = req.query;
+  try {
+    const { token } = req.query;
 
-  if (!token) {
-    res.status(400).json({
-      message: "Invalid token",
+    if (!token) {
+      res.status(400).json({ message: "Invalid token" });
+      return;
+    }
+
+    const user = await prisma.user.findFirst({
+      where: { resetToken: token as string },
     });
-    return;
+
+    if (!user || !user.resetTokenExpiry || new Date() > user.resetTokenExpiry) {
+      res.status(400).json({ message: "Invalid or expired token." });
+      return;
+    }
+
+    res.json({ message: "Token is valid. Proceed to reset password." });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
   }
-
-  const user = await prisma.user.findFirst({
-    where: { resetToken: token as string },
-  });
-
-  if (!user) {
-    res.status(400).json({ message: "Invalid or expired token." });
-    return;
-  }
-
-  res.json({ message: "Token is valid. Proceed to reset password." });
 }
 
 export async function resetPassword(req: Request, res: Response) {
-  const { token, newPassword } = req.body;
-
   try {
+    const { token, newPassword } = req.body;
+
+    const passwordValidation = passwordSchema.safeParse(newPassword);
+    if (!passwordValidation.success) {
+      res.status(400).json({
+        message: passwordValidation.error.errors
+          .map((err) => err.message)
+          .join(", "),
+      });
+      return;
+    }
+
     const user = await prisma.user.findFirst({
       where: { resetToken: token, resetTokenExpiry: { gte: new Date() } },
     });
@@ -531,19 +573,18 @@ export async function resetPassword(req: Request, res: Response) {
 }
 
 export async function refreshTokenHandler(req: Request, res: Response) {
-  const { refreshToken } = req.body;
+  try {
+    const { refreshToken } = req.body;
 
-  if (!refreshToken) {
-    res.status(400).json({ message: "Refresh token is required" });
-    return;
+    const result = await getAccessTokenFromRefreshToken(refreshToken);
+
+    if (!result) {
+      res.status(403).json({ message: "Invalid or expired refresh token" });
+      return;
+    }
+
+    res.json({ accessToken: result.accessToken });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
   }
-
-  const result = await getAccessTokenFromRefreshToken(refreshToken);
-
-  if (!result) {
-    res.status(403).json({ message: "Invalid or expired refresh token" });
-    return;
-  }
-
-  res.json({ accessToken: result.accessToken });
 }
