@@ -252,27 +252,8 @@ export async function register(req: Request, res: Response) {
       `<p>Your OTP code for verification is: <strong>${otp}</strong></p>`
     );
 
-    const accessToken = generateAccessToken({
-      id: newUser.id,
-      email: newUser.email,
-      role: newUser.role,
-    });
-
-    const refreshToken = generateRefreshToken({
-      id: newUser.id,
-      email: newUser.email,
-      role: newUser.role,
-    });
-
-    await prisma.user.update({
-      where: { id: newUser.id },
-      data: { refreshToken },
-    });
-
     res.status(201).json({
       message: "Registration successful. Please check your email for the OTP.",
-      accessToken,
-      refreshToken,
     });
   } catch (error) {
     res.status(500).json({ message: "Internal server error." });
@@ -508,14 +489,11 @@ export async function forgotPassword(req: Request, res: Response) {
 
     const resetLink = `${serverUrl}/api/auth/reset-password?token=${resetToken}`;
 
-    const mailOptions = {
-      from: process.env.AUTH_EMAIL,
-      to: email,
-      subject: "Password Reset",
-      text: `Click the link to reset your password: ${resetLink}`,
-    };
-
-    await emailService.sendMail(mailOptions);
+    await sendEmail(
+      email,
+      "Email Verification Code",
+      `<p>Click the link to reset your password: <strong>${resetLink}</strong></p>`
+    );
 
     res.json({
       message: "Password reset link sent. Please check your email.",
