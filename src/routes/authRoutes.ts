@@ -56,7 +56,15 @@ router.get("/get-token-cookies", AuthController.getTokenCookies);
 router.post(
   "/get-phone-otp",
   validateRequest(["phoneNumber"]),
-  AuthController.getOtp
+  authenticateToken,
+  AuthController.getPhoneOTP
+);
+
+router.post(
+  "/verify-phone-otp",
+  validateRequest(["phoneNumber", "otp"]),
+  authenticateToken,
+  AuthController.verifyPhoneOTP
 );
 
 // Get Access token from Refresh token

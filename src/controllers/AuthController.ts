@@ -7,7 +7,6 @@ import { OAuth2Client } from "google-auth-library";
 import "dotenv/config";
 import bcrypt from "bcrypt";
 import { v4 } from "uuid";
-import emailService from "../utils/emailService";
 import {
   generateOtp,
   getOtpExpiration,
@@ -16,6 +15,7 @@ import {
 import { sendEmail } from "../utils/emailServiceSand";
 import getAccessTokenFromRefreshToken from "../utils/getAccessTokenFromRefreshToken";
 import { z } from "zod";
+import { isValidPhoneNumber } from "libphonenumber-js";
 
 const serverUrl = process.env.SERVER_URL;
 const clientUrl = process.env.CLIENT_URL;
@@ -53,33 +53,40 @@ const registerSchema = z.object({
   password: passwordSchema,
 });
 
-export const getOtp = async (req: Request, res: Response) => {
+export const getPhoneOTP = async (req: Request, res: Response) => {
   try {
     const { phoneNumber } = req.body;
+
+    if (!isValidPhoneNumber(phoneNumber)) {
+      res.status(400).json({
+        message:
+          "Invalid phone number format. Please use international format, e.g., +1234567890.",
+      });
+      return;
+    }
 
     const user = await prisma.user.findUnique({
       where: { phoneNumber },
     });
 
-    // if (!user) {
-    //   res.status(404).json({ message: "User not found" });
-    //   return;
-    // }
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
 
     const otp = generateOtp();
     const expiredAt = getOtpExpiration();
 
-    // await prisma.user.update({
-    //   where: { phoneNumber },
-    //   data: {
-    //     phoneOtpToken: otp,
-    //     expiredPhoneOtpToken: expiredAt,
-    //   },
-    // });
+    await prisma.user.update({
+      where: { phoneNumber },
+      data: {
+        phoneOtpToken: otp,
+        expiredPhoneOtpToken: expiredAt,
+      },
+    });
 
     // Kirim OTP lewat Twilio (menggunakan utils)
     const message = await sendOtpMessage(phoneNumber, otp);
-    console.log("SID : " + message.sid);
 
     res.json({ message: "OTP sent successfully", expiresAt: expiredAt });
   } catch (err) {
@@ -87,6 +94,46 @@ export const getOtp = async (req: Request, res: Response) => {
     res
       .status(500)
       .json({ message: "Failed to send OTP", error: error.message });
+  }
+};
+
+export const verifyPhoneOTP = async (req: Request, res: Response) => {
+  try {
+    const { phoneNumber, otp } = req.body;
+
+    const user = await prisma.user.findUnique({
+      where: { phoneNumber },
+    });
+
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    if (
+      user.phoneOtpToken !== otp ||
+      !user.expiredPhoneOtpToken ||
+      new Date() > user.expiredPhoneOtpToken
+    ) {
+      res.status(400).json({ message: "Invalid or expired OTP" });
+      return;
+    }
+
+    await prisma.user.update({
+      where: { phoneNumber },
+      data: {
+        phoneOtpToken: null,
+        expiredPhoneOtpToken: null,
+        isPhoneVerified: true,
+      },
+    });
+
+    res.json({ message: "Phone number verified successfully" });
+  } catch (err) {
+    const error = err as Error;
+    res
+      .status(500)
+      .json({ message: "Failed to verify OTP", error: error.message });
   }
 };
 
@@ -103,7 +150,7 @@ export async function verifyEmail(req: Request, res: Response) {
       return;
     }
 
-    if (user.isVerified) {
+    if (user.isEmailVerified) {
       res.status(400).json({ message: "Email already verified" });
       return;
     }
@@ -140,7 +187,7 @@ export async function verifyEmail(req: Request, res: Response) {
     await prisma.user.update({
       where: { email },
       data: {
-        isVerified: true,
+        isEmailVerified: true,
         emailOtpToken: null,
         expiredEmailOtpToken: null,
         refreshToken,
@@ -180,7 +227,7 @@ export async function resendVerificationEmail(req: Request, res: Response) {
       return;
     }
 
-    if (user.isVerified) {
+    if (user.isEmailVerified) {
       res.status(400).json({ message: "Email is already verified" });
       return;
     }
@@ -220,7 +267,7 @@ export async function register(req: Request, res: Response) {
     const existingUser = await prisma.user.findUnique({ where: { email } });
 
     if (existingUser) {
-      if (existingUser.isVerified) {
+      if (existingUser.isEmailVerified) {
         res.status(400).json({ message: "email is already in use" });
         return;
       }
@@ -273,7 +320,7 @@ export async function login(req: Request, res: Response) {
       return;
     }
 
-    if (!existingUser.isVerified) {
+    if (!existingUser.isEmailVerified) {
       res.status(403).json({ message: "User not verified" });
       return;
     }
@@ -378,7 +425,7 @@ export async function googleCallback(req: Request, res: Response) {
           firstName: userProfil.given_name,
           lastName: userProfil.family_name,
           provider: "Google",
-          isVerified: true,
+          isEmailVerified: true,
         },
       });
     }
@@ -467,7 +514,7 @@ export async function forgotPassword(req: Request, res: Response) {
       return;
     }
 
-    if (!user.isVerified) {
+    if (!user.isEmailVerified) {
       res.status(403).json({ message: "User not verified" });
       return;
     }

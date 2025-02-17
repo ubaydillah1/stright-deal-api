@@ -6,9 +6,8 @@ export const generateOtp = () => crypto.randomInt(100000, 999999).toString();
 export const getOtpExpiration = () => dayjs().add(5, "minutes").toDate();
 
 export const sendOtpMessage = async (phoneNumber: string, otp: string) => {
-  console.log("Generated OTP:", otp);
   return await twilioClient.messages.create({
-    body: `Your OTP code is ${otp}. It will expire in 5 minutes.`,
+    body: `Your OTP code is ${otp}. It will expire in 5 minutes. --Testing`,
     from: twilioPhoneNumber,
     to: phoneNumber,
   });
