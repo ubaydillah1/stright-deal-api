@@ -302,7 +302,6 @@ export async function createCarForm(req: Request, res: Response) {
     console.log(files);
 
     if (files) {
-      console.log("Masuk Files");
       const fileArray = Array.isArray(files) ? files : [files];
 
       const uploadPromises = fileArray.map(async (file) => {

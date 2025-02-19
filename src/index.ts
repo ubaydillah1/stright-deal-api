@@ -10,6 +10,7 @@ import rateLimit from "express-rate-limit";
 // import "./utils/seed";
 import fileUpload from "express-fileupload";
 import { authorize } from "./middlewares/authorize";
+import { supabase } from "./config/supabaseClient";
 
 const app = express();
 
@@ -93,6 +94,26 @@ app.get("/supabase", (req, res) => {
     Anon: process.env.SUPABASE_ANON_KEY,
   });
 });
+
+async function testConnection() {
+  try {
+    const { data, error } = await supabase.from("users").select("*").limit(1);
+
+    if (error) {
+      throw error;
+    }
+
+    console.log("✅ Connected to Supabase successfully!");
+    console.log("Sample data:", data);
+  } catch (error) {
+    console.error(
+      "❌ Failed to connect to Supabase:",
+      (error as Error).message
+    );
+  }
+}
+
+testConnection();
 
 app.post("/image", (req, res) => {
   console.log(req.files);
