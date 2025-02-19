@@ -87,6 +87,13 @@ app.get("/user", authorize(["User"]), (req, res) => {
   });
 });
 
+app.get("/supabase", (req, res) => {
+  res.json({
+    SupabaseURL: process.env.SUPABASE_URL,
+    Anon: process.env.SUPABASE_ANON_KEY,
+  });
+});
+
 app.post("/image", (req, res) => {
   console.log(req.files);
   res.json({
