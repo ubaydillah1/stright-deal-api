@@ -1,7 +1,8 @@
 import express from "express";
 import * as AuthController from "./../controllers/AuthController";
 import { validateRequest } from "../middlewares/validateRequest";
-import { authenticateToken } from "../middlewares/authenticateToken";
+import { authorize } from "../middlewares/authorize";
+import { Role } from "@prisma/client";
 
 const router = express.Router();
 
@@ -48,6 +49,17 @@ router.post(
 // Google Auth
 router.get("/google", AuthController.googleAuth);
 router.get("/google/callback", AuthController.googleCallback);
+router.get(
+  "/google/calendar",
+  authorize([Role.User]),
+  AuthController.requestAdditionalScopesForGoogleCalendar
+);
+
+router.post(
+  "/google/calendar",
+  authorize([Role.User]),
+  AuthController.createGoogleCalendarEvent
+);
 
 // Get token from cookies
 router.get("/get-token-cookies", AuthController.getTokenCookies);
@@ -56,14 +68,14 @@ router.get("/get-token-cookies", AuthController.getTokenCookies);
 router.post(
   "/get-phone-otp",
   validateRequest(["phoneNumber"]),
-  authenticateToken,
+  authorize([Role.User]),
   AuthController.getPhoneOTP
 );
 
 router.post(
   "/verify-phone-otp",
   validateRequest(["phoneNumber", "otp"]),
-  authenticateToken,
+  authorize([Role.User]),
   AuthController.verifyPhoneOTP
 );
 

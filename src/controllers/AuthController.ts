@@ -16,6 +16,7 @@ import { sendEmail } from "../utils/emailServiceSand";
 import getAccessTokenFromRefreshToken from "../utils/getAccessTokenFromRefreshToken";
 import { z } from "zod";
 import { isValidPhoneNumber } from "libphonenumber-js";
+import { google } from "googleapis";
 
 const serverUrl = process.env.SERVER_URL;
 const clientUrl = process.env.CLIENT_URL;
@@ -85,10 +86,13 @@ export const getPhoneOTP = async (req: Request, res: Response) => {
       },
     });
 
-    // Kirim OTP lewat Twilio (menggunakan utils)
     const message = await sendOtpMessage(phoneNumber, otp);
 
-    res.json({ message: "OTP sent successfully", expiresAt: expiredAt });
+    res.json({
+      message: "OTP sent successfully",
+      expiresAt: expiredAt,
+      sid: message.sid,
+    });
   } catch (err) {
     const error = err as Error;
     res
@@ -379,10 +383,10 @@ export async function logout(req: Request, res: Response) {
 // Google Controller
 export async function googleCallback(req: Request, res: Response) {
   const code = req.query.code as string;
+  const state = req.query.state as string;
 
   if (!code) {
-    res.redirect(`${clientUrl}/failed?status=login&error=missing_code`);
-    return;
+    return res.redirect(`${clientUrl}/failed?status=login&error=missing_code`);
   }
 
   try {
@@ -395,9 +399,9 @@ export async function googleCallback(req: Request, res: Response) {
     );
 
     const { tokens } = await oAuth2Client.getToken(code);
-
     oAuth2Client.setCredentials(tokens);
     const access_token = tokens.access_token;
+    const refresh_token = tokens.refresh_token;
 
     if (!access_token) {
       return res.redirect(
@@ -436,32 +440,61 @@ export async function googleCallback(req: Request, res: Response) {
       );
     }
 
-    const accessToken = generateAccessToken({
-      id: existingUser.id,
-      email: existingUser.email,
-      role: existingUser.role,
-    });
+    if (state === "login") {
+      await prisma.user.update({
+        where: { id: existingUser.id },
+        data: {
+          googleAccessToken: access_token,
+          googleRefreshToken: refresh_token,
+          googleLastConnectedAt: new Date(),
+        },
+      });
+    }
 
-    const refreshToken = generateRefreshToken({
-      id: existingUser.id,
-      email: existingUser.email,
-      role: existingUser.role,
-    });
+    if (state === "calendar") {
+      console.log("Masuk calendar callback");
+      console.log(access_token, refresh_token);
+      await prisma.user.update({
+        where: { id: existingUser.id },
+        data: {
+          googleAccessToken: access_token,
+          googleRefreshToken: refresh_token,
+          googleCalendarConnected: true,
+          googleLastConnectedAt: new Date(),
+        },
+      });
 
-    await prisma.user.update({
-      where: { id: existingUser.id },
-      data: { refreshToken },
-    });
+      return res.redirect(
+        `${clientUrl}/success?status=calendar&message=calendar_connected`
+      );
+    } else {
+      const accessToken = generateAccessToken({
+        id: existingUser.id,
+        email: existingUser.email,
+        role: existingUser.role,
+      });
 
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      sameSite: "none",
-      secure: true,
-    });
+      const refreshToken = generateRefreshToken({
+        id: existingUser.id,
+        email: existingUser.email,
+        role: existingUser.role,
+      });
 
-    res.redirect(
-      `${clientUrl}/success?status=login&access_token=${accessToken}`
-    );
+      await prisma.user.update({
+        where: { id: existingUser.id },
+        data: { refreshToken },
+      });
+
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        sameSite: "none",
+        secure: true,
+      });
+
+      return res.redirect(
+        `${clientUrl}/success?status=login&access_token=${accessToken}`
+      );
+    }
   } catch (error: any) {
     return res.redirect(
       `${clientUrl}/failed?status=login&error=${error.message}`
@@ -496,9 +529,128 @@ export async function googleAuth(req: Request, res: Response) {
       "https://www.googleapis.com/auth/userinfo.email",
     ],
     prompt: "consent",
+    state: "login",
   });
 
   res.json({ url: authorizeUrl });
+}
+
+export async function requestAdditionalScopesForGoogleCalendar(
+  req: Request,
+  res: Response
+) {
+  const userId = (req as any).user?.id;
+  if (!userId) {
+    res.status(401).json({ error: "User not authenticated" });
+    return;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user || !user.googleRefreshToken) {
+    res.status(401).json({
+      error: "User not logged in or no Google refresh token available",
+    });
+    return;
+  }
+
+  const redirectUrl = `${serverUrl}/api/auth/google/callback`;
+
+  const oAuth2Client = new OAuth2Client(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    redirectUrl
+  );
+
+  oAuth2Client.setCredentials({ refresh_token: user.googleRefreshToken });
+
+  const authorizeUrl = oAuth2Client.generateAuthUrl({
+    access_type: "offline",
+    scope: [
+      "https://www.googleapis.com/auth/calendar",
+      "https://www.googleapis.com/auth/calendar.events",
+      "https://www.googleapis.com/auth/calendar.events.owned",
+    ],
+    include_granted_scopes: true,
+    login_hint: user.email,
+    state: "calendar",
+  });
+
+  res.json({ url: authorizeUrl });
+}
+
+export async function createGoogleCalendarEvent(req: Request, res: Response) {
+  const userId = (req as any).user?.id;
+  if (!userId) {
+    res.status(401).json({ error: "User not authenticated" });
+    return;
+  }
+
+  const { title, description, startDate, endDate } = req.body;
+
+  if (!title || !description || !startDate || !endDate) {
+    res.status(400).json({
+      error: "Title, description, startDate, and endDate are required",
+    });
+    return;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user || !user.googleAccessToken || !user.googleRefreshToken) {
+    res.status(401).json({ error: "No Google credentials found" });
+    return;
+  }
+
+  const oAuth2Client = new OAuth2Client(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET
+  );
+
+  oAuth2Client.setCredentials({
+    access_token: user.googleAccessToken,
+    refresh_token: user.googleRefreshToken,
+  });
+
+  try {
+    const calendar = google.calendar({ version: "v3", auth: oAuth2Client });
+
+    const event = {
+      summary: title,
+      description: description,
+      start: {
+        dateTime: startDate,
+        timeZone: "Asia/Jakarta",
+      },
+      end: {
+        dateTime: endDate,
+        timeZone: "Asia/Jakarta",
+      },
+      conferenceData: {
+        createRequest: {
+          requestId: "sample123",
+          conferenceSolutionKey: {
+            type: "hangoutsMeet",
+          },
+        },
+      },
+      attendees: [],
+    };
+
+    const createdEvent = await calendar.events.insert({
+      calendarId: "primary",
+      requestBody: event,
+      conferenceDataVersion: 1,
+    });
+
+    res.status(200).json({ event: createdEvent.data });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to create event" });
+  }
 }
 
 export async function forgotPassword(req: Request, res: Response) {

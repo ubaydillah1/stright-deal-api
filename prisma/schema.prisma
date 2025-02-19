@@ -85,29 +85,46 @@ enum PlannedSaleTimeline {
   NotReadyYet
 }
 
+enum AdditionalDisclosures {
+  RipsOrTearsInSeats
+  FireOrFloodDamage
+  PreviouslyStolen
+  NoNothingElseToDisclose
+}
+
+enum TiresType {
+  AllSeason
+  WinterTires
+}
+
 model User {
-  id                   String        @id @default(uuid())
-  email                String        @unique
-  firstName            String
-  lastName             String
-  password             String?
-  isEmailVerified      Boolean       @default(false)
-  emailOtpToken        String?
-  expiredEmailOtpToken DateTime?
-  phoneNumber          String?       @unique
-  isPhoneVerified      Boolean       @default(false)
-  phoneOtpToken        String?
-  expiredPhoneOtpToken DateTime?
-  refreshToken         String?
-  resetToken           String?
-  resetTokenExpiry     DateTime?
-  provider             Provider      @default(Local)
-  avatar               String?
-  role                 Role          @default(Visitor)
-  activityLogs         ActivityLog[]
-  Cars                 Car[]
-  createdAt            DateTime      @default(now())
-  updatedAt            DateTime      @updatedAt
+  id                      String        @id @default(uuid())
+  email                   String        @unique
+  firstName               String
+  lastName                String
+  password                String?
+  isEmailVerified         Boolean       @default(false)
+  emailOtpToken           String?
+  expiredEmailOtpToken    DateTime?
+  phoneNumber             String?       @unique
+  isPhoneVerified         Boolean       @default(false)
+  phoneOtpToken           String?
+  expiredPhoneOtpToken    DateTime?
+  refreshToken            String?
+  resetToken              String?
+  resetTokenExpiry        DateTime?
+  provider                Provider      @default(Local)
+  avatar                  String?
+  role                    Role          @default(Visitor)
+  activityLogs            ActivityLog[]
+  Cars                    Car[]
+  googleAccessToken       String?
+  googleRefreshToken      String?
+  googleCalendarConnected Boolean       @default(false)
+  googleMeetConnected     Boolean       @default(false)
+  googleLastConnectedAt   DateTime?
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
 
   @@index([phoneNumber])
   @@map("users")
@@ -117,24 +134,26 @@ model Car {
   id                       String                   @id @default(uuid())
   user                     User                     @relation(fields: [userId], references: [id])
   userId                   String
-  // owner Type
-  slug                     String
+  slug                     String                   @unique
   vin                      String?
   miliage                  Int
-  statusReview             StatusReview
+  statusReview             StatusReview             @default(NeedToReview)
   transmission_type        TransmissionType
   isSoloOwner              Boolean
   color                    String
   loanOrLeaseStatus        LoanOrLeaseStatus
+  loanCompany              String
+  remainingBalance         Int
   isTradeIn                Boolean
   plannedSaleTime          PlannedSaleTime
   additionalFeature        String[]
   exteriorCondition        ExteriorCondition
   interiorDamage           InteriorDamage
+  additionalDisclosures    AdditionalDisclosures    @default(NoNothingElseToDisclose)
   keyCount                 Int
   tireSetCount             Int
   tireReplacementTimeframe TireReplacementTimeframe
-  // Tire type
+  TiresType                TiresType
   hasOriginalFactoryRims   Boolean
   hasMechanicalIssues      Boolean
   isDriveable              Boolean
@@ -142,7 +161,7 @@ model Car {
   overallConditionStatus   ConditionStatus
   plannedSaleTimeline      PlannedSaleTimeline
   activityLogs             ActivityLog[]
-  CardImages               CarImage[]
+  CarImages                CarImage[]
   createdAt                DateTime                 @default(now())
   updatedAt                DateTime                 @updatedAt
 

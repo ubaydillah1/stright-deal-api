@@ -5,33 +5,18 @@ import authRouter from "./routes/authRoutes";
 import cors from "cors";
 import prisma from "./config/prismaClient";
 import cookieParser from "cookie-parser";
-import { sendEmail } from "./utils/emailServiceSand";
-// import { supabase } from "./config/supabaseClient";
+import userCarRouter from "./routes/userCarRoutes";
+import rateLimit from "express-rate-limit";
+import { supabase } from "./config/supabaseClient";
 // import "./utils/seed";
-
-// import twilio from "twilio";
-
-// const accountSid = process.env.TWILIO_ACCOUNT_SID;
-// const authToken = process.env.TWILIO_AUTH_TOKEN;
-// const client = twilio(accountSid, authToken);
-
-// async function createMessage() {
-//   const message = await client.messages.create({
-//     body: "This is the ship that made the Kessel Run in fourteen parsecs?",
-//     from: "+19125134149",
-//     to: "+15558675310",
-//   });
-
-//   console.log(message.body);
-// }
-
-// createMessage();
+import fileUpload from "express-fileupload";
 
 const app = express();
 
 const PORT = process.env.PORT;
 const HOST = process.env.HOST;
 
+app.use(fileUpload());
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -50,10 +35,41 @@ app.use(
   })
 );
 
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: "Too many requests from this IP, please try again later",
+});
+
+async function verifyToken(token: string) {
+  const url = `https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${token}`;
+
+  try {
+    // Menggunakan fetch untuk memverifikasi token
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error("Token verification failed");
+    }
+
+    // Mengambil data JSON dari respons
+    const data = await response.json();
+    console.log(data); // Menampilkan data token yang valid
+  } catch (error) {
+    console.error("Error:", error);
+  }
+}
+
+// Contoh penggunaan fungsi dengan token akses
+const token =
+  "ya29.a0AXeO80RC7nLRK2k5eNXs6jSp2kZe1RG3KI5sNurxcOC2OIZDeYgrZZQ3Cz4X4NHi2xxyINOME19uE-M8yUKvZmEjv6KT0vElAF7cDbH1KBxyBIpU8wTxzCrTSNeErWZwtEfMC-HOC-JtxnkyD4RyYe7I49QFCkS0nLkGhuT4aCgYKAXISARISFQHGX2Mi5N8jPH4Zvoe3MPwqs0CEPw0175";
+// verifyToken(token);
+
 app.use("/api/auth", authRouter);
 app.use("/api/dashboard", dashboardRouter);
 
 app.get("/delete-users", async (req, res) => {
+  console.log(req.ip);
   try {
     await prisma.user.deleteMany();
     res.json({
@@ -81,19 +97,6 @@ app.get("/prisma", async (req, res) => {
     });
   }
 });
-
-// const getBucketInfo = async () => {
-//   const { data, error } = await supabase.storage.listBuckets();
-
-//   if (error) {
-//     console.error("Error fetching bucket:", error);
-//     return;
-//   }
-
-//   console.log("Bucket data:", data);
-// };
-
-// getBucketInfo();
 
 app.get("*", (req: Request, res: Response) => {
   res.json({

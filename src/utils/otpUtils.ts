@@ -7,7 +7,7 @@ export const getOtpExpiration = () => dayjs().add(5, "minutes").toDate();
 
 export const sendOtpMessage = async (phoneNumber: string, otp: string) => {
   return await twilioClient.messages.create({
-    body: `Your OTP code is ${otp}. It will expire in 5 minutes. --Testing`,
+    body: `Your OTP code is ${otp}. It will expire in 5 minutes.`,
     from: twilioPhoneNumber,
     to: phoneNumber,
   });

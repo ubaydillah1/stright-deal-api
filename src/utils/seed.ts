@@ -1,90 +1,41 @@
-import {
-  PrismaClient,
-  StatusReview,
-  TransmissionType,
-  LoanOrLeaseStatus,
-  PlannedSaleTime,
-  ExteriorCondition,
-  InteriorDamage,
-  TireReplacementTimeframe,
-  ConditionStatus,
-  PlannedSaleTimeline,
-  Provider,
-  Role,
-} from "@prisma/client";
-import { faker } from "@faker-js/faker";
+// prisma/seed.js
+
+const { PrismaClient, Role, Provider } = require("@prisma/client");
+const { faker } = require("@faker-js/faker");
 
 const prisma = new PrismaClient();
 
 async function main() {
-  await prisma.user.createMany({
-    data: Array.from({ length: 5 }).map(() => ({
-      email: faker.internet.email(),
-      firstName: faker.person.firstName(),
-      lastName: faker.person.lastName(),
-      password: faker.internet.password(),
-      isVerified: faker.datatype.boolean(),
-      verificationToken: faker.string.uuid(),
-      phoneNumber: faker.phone.number(),
-      otpToken: faker.string.numeric(6),
-      expiredOtpToken: faker.date.future(),
-      refreshToken: faker.string.uuid(),
-      resetToken: faker.string.uuid(),
-      resetTokenExpiry: faker.date.future(),
-      provider: faker.helpers.arrayElement(Object.values(Provider)),
-      avatar: faker.image.avatar(),
-      role: faker.helpers.arrayElement(Object.values(Role)),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })),
-  });
+  // Membuat 10 user menggunakan faker
+  for (let i = 0; i < 10; i++) {
+    const user = await prisma.user.create({
+      data: {
+        email: faker.internet.email(),
+        firstName: faker.person.firstName(),
+        lastName: faker.person.lastName(),
+        password: faker.internet.password(), // jangan lupa untuk hash password di dunia nyata
+        isEmailVerified: faker.datatype.boolean(),
+        provider: faker.helpers.arrayElement([
+          Provider.Local,
+          Provider.Google,
+          Provider.Apple,
+        ]),
+        role: faker.helpers.arrayElement([Role.Admin, Role.User, Role.Visitor]),
+        phoneNumber: `+1${faker.phone.number("##########")}`, // Format nomor telepon sesuai dengan contoh +121212
+        isPhoneVerified: faker.datatype.boolean(),
+        avatar: faker.image.avatar(),
+      },
+    });
 
-  // Ambil user ID yang baru dibuat
-  const allUsers = await prisma.user.findMany();
-
-  // Buat 10 dummy data mobil (Car)
-  const cars = Array.from({ length: 10 }).map(() => ({
-    slug: faker.lorem.slug(),
-    miliage: faker.number.int({ min: 1000, max: 200000 }),
-    statusReview: faker.helpers.arrayElement(Object.values(StatusReview)),
-    transmission_type: faker.helpers.arrayElement(
-      Object.values(TransmissionType)
-    ),
-    isSoloOwner: faker.datatype.boolean(),
-    color: faker.vehicle.color(),
-    loanOrLeaseStatus: faker.helpers.arrayElement(
-      Object.values(LoanOrLeaseStatus)
-    ),
-    isTradeIn: faker.datatype.boolean(),
-    plannedSaleTime: faker.helpers.arrayElement(Object.values(PlannedSaleTime)),
-    additionalFeature: [faker.vehicle.fuel(), faker.vehicle.manufacturer()],
-    exteriorCondition: faker.helpers.arrayElement(
-      Object.values(ExteriorCondition)
-    ),
-    interiorDamage: faker.helpers.arrayElement(Object.values(InteriorDamage)),
-    keyCount: faker.number.int({ min: 1, max: 3 }),
-    tireSetCount: faker.number.int({ min: 1, max: 4 }),
-    tireReplacementTimeframe: faker.helpers.arrayElement(
-      Object.values(TireReplacementTimeframe)
-    ),
-    hasOriginalFactoryRims: faker.datatype.boolean(),
-    hasMechanicalIssues: faker.datatype.boolean(),
-    isDriveable: faker.datatype.boolean(),
-    hasAccidentOrClaimStatus: faker.datatype.boolean(),
-    overallConditionStatus: faker.helpers.arrayElement(
-      Object.values(ConditionStatus)
-    ),
-    plannedSaleTimeline: faker.helpers.arrayElement(
-      Object.values(PlannedSaleTimeline)
-    ),
-    userId: faker.helpers.arrayElement(allUsers).id,
-  }));
-
-  await prisma.car.createMany({ data: cars });
-
-  console.log("✅ 5 Dummy Users & 10 Dummy Cars berhasil dibuat!");
+    console.log(`User Created: ${user.firstName} ${user.lastName}`);
+  }
 }
 
 main()
-  .catch((e) => console.error(e))
-  .finally(() => prisma.$disconnect());
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
