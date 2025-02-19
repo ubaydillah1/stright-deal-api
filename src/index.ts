@@ -7,19 +7,19 @@ import prisma from "./config/prismaClient";
 import cookieParser from "cookie-parser";
 import userCarRouter from "./routes/userCarRoutes";
 import rateLimit from "express-rate-limit";
-import { supabase } from "./config/supabaseClient";
 // import "./utils/seed";
 import fileUpload from "express-fileupload";
+import { authorize } from "./middlewares/authorize";
 
 const app = express();
 
 const PORT = process.env.PORT;
 const HOST = process.env.HOST;
 
-app.use(fileUpload());
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(fileUpload());
 app.use(
   cors({
     origin: [
@@ -67,6 +67,32 @@ const token =
 
 app.use("/api/auth", authRouter);
 app.use("/api/dashboard", dashboardRouter);
+app.use("/api/user", userCarRouter);
+
+app.get("/visitor", authorize(["Visitor"]), (req, res) => {
+  res.json({
+    message: "Success Visitor",
+  });
+});
+
+app.get("/admin", authorize(["Admin"]), (req, res) => {
+  res.json({
+    message: "Success admin",
+  });
+});
+
+app.get("/user", authorize(["User"]), (req, res) => {
+  res.json({
+    message: "Success user",
+  });
+});
+
+app.post("/image", (req, res) => {
+  console.log(req.files);
+  res.json({
+    message: "Message Succesfully",
+  });
+});
 
 app.get("/delete-users", async (req, res) => {
   console.log(req.ip);

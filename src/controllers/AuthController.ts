@@ -581,6 +581,8 @@ export async function requestAdditionalScopesForGoogleCalendar(
   res.json({ url: authorizeUrl });
 }
 
+
+
 export async function createGoogleCalendarEvent(req: Request, res: Response) {
   const userId = (req as any).user?.id;
   if (!userId) {

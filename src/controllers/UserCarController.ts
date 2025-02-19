@@ -1,3 +1,15 @@
+import {
+  AdditionalDisclosures,
+  ConditionStatus,
+  ExteriorCondition,
+  InteriorDamage,
+  LoanOrLeaseStatus,
+  PlannedSaleTime,
+  PlannedSaleTimeline,
+  TireReplacementTimeframe,
+  TransmissionType,
+  TiresType,
+} from "@prisma/client";
 import prisma from "../config/prismaClient";
 import { supabase } from "../config/supabaseClient";
 import generateUniqueSlug from "../utils/generateUniqueCarSlug";
@@ -9,6 +21,25 @@ interface CustomRequest extends Request {
   };
 }
 
+function isValidEnumValue(enumObj: any, value: string): boolean {
+  return Object.values(enumObj).includes(value);
+}
+
+function getEnumValues(enumObj: any): string[] {
+  return Object.values(enumObj);
+}
+
+function getEnumValidationError(
+  enumObj: any,
+  field: string,
+  value: string
+): string {
+  const availableOptions = getEnumValues(enumObj);
+  return `Invalid ${field}: "${value}". Available options are: ${availableOptions.join(
+    ", "
+  )}`;
+}
+
 export async function createCarForm(req: Request, res: Response) {
   const {
     miliage,
@@ -17,6 +48,9 @@ export async function createCarForm(req: Request, res: Response) {
     color,
     loanOrLeaseStatus,
     loanCompany,
+    monthlyPayment,
+    monthsRemaining,
+    purchaseOptionAmount,
     remainingBalance,
     isTradeIn,
     plannedSaleTime,
@@ -27,7 +61,7 @@ export async function createCarForm(req: Request, res: Response) {
     keyCount,
     tireSetCount,
     tireReplacementTimeframe,
-    TiresType,
+    tiresType,
     hasOriginalFactoryRims,
     hasMechanicalIssues,
     isDriveable,
@@ -47,8 +81,6 @@ export async function createCarForm(req: Request, res: Response) {
     "isSoloOwner",
     "color",
     "loanOrLeaseStatus",
-    "loanCompany",
-    "remainingBalance",
     "isTradeIn",
     "plannedSaleTime",
     "additionalFeature",
@@ -58,7 +90,7 @@ export async function createCarForm(req: Request, res: Response) {
     "keyCount",
     "tireSetCount",
     "tireReplacementTimeframe",
-    "TiresType",
+    "tiresType",
     "hasOriginalFactoryRims",
     "hasMechanicalIssues",
     "isDriveable",
@@ -78,6 +110,17 @@ export async function createCarForm(req: Request, res: Response) {
     }
   });
 
+  if (loanOrLeaseStatus === LoanOrLeaseStatus.Loan) {
+    if (!loanCompany) missingFields.push("loanCompany");
+    if (!remainingBalance) missingFields.push("remainingBalance");
+  }
+
+  if (loanOrLeaseStatus === LoanOrLeaseStatus.Lease) {
+    if (!monthlyPayment) missingFields.push("monthlyPayment");
+    if (!monthsRemaining) missingFields.push("monthsRemaining");
+    if (!purchaseOptionAmount) missingFields.push("purchaseOptionAmount");
+  }
+
   // Return only the missing fields
   if (missingFields.length > 0) {
     res.status(400).json({
@@ -87,6 +130,108 @@ export async function createCarForm(req: Request, res: Response) {
     return;
   }
 
+  // Validate enum values
+  const enumValidationErrors: string[] = [];
+
+  if (!isValidEnumValue(TransmissionType, transmission_type)) {
+    enumValidationErrors.push(
+      getEnumValidationError(
+        TransmissionType,
+        "transmission_type",
+        transmission_type
+      )
+    );
+  }
+
+  if (!isValidEnumValue(LoanOrLeaseStatus, loanOrLeaseStatus)) {
+    enumValidationErrors.push(
+      getEnumValidationError(
+        LoanOrLeaseStatus,
+        "loanOrLeaseStatus",
+        loanOrLeaseStatus
+      )
+    );
+  }
+
+  if (!isValidEnumValue(PlannedSaleTime, plannedSaleTime)) {
+    enumValidationErrors.push(
+      getEnumValidationError(
+        PlannedSaleTime,
+        "plannedSaleTime",
+        plannedSaleTime
+      )
+    );
+  }
+
+  if (!isValidEnumValue(ExteriorCondition, exteriorCondition)) {
+    enumValidationErrors.push(
+      getEnumValidationError(
+        ExteriorCondition,
+        "exteriorCondition",
+        exteriorCondition
+      )
+    );
+  }
+
+  if (!isValidEnumValue(InteriorDamage, interiorDamage)) {
+    enumValidationErrors.push(
+      getEnumValidationError(InteriorDamage, "interiorDamage", interiorDamage)
+    );
+  }
+
+  if (!isValidEnumValue(TireReplacementTimeframe, tireReplacementTimeframe)) {
+    enumValidationErrors.push(
+      getEnumValidationError(
+        TireReplacementTimeframe,
+        "tireReplacementTimeframe",
+        tireReplacementTimeframe
+      )
+    );
+  }
+
+  if (!isValidEnumValue(ConditionStatus, overallConditionStatus)) {
+    enumValidationErrors.push(
+      getEnumValidationError(
+        ConditionStatus,
+        "overallConditionStatus",
+        overallConditionStatus
+      )
+    );
+  }
+
+  if (!isValidEnumValue(PlannedSaleTimeline, plannedSaleTimeline)) {
+    enumValidationErrors.push(
+      getEnumValidationError(
+        PlannedSaleTimeline,
+        "plannedSaleTimeline",
+        plannedSaleTimeline
+      )
+    );
+  }
+
+  if (!isValidEnumValue(AdditionalDisclosures, additionalDisclosures)) {
+    enumValidationErrors.push(
+      getEnumValidationError(
+        AdditionalDisclosures,
+        "additionalDisclosures",
+        additionalDisclosures
+      )
+    );
+  }
+
+  if (!isValidEnumValue(TiresType, tiresType)) {
+    enumValidationErrors.push(
+      getEnumValidationError(TiresType, "tiresType", tiresType)
+    );
+  }
+
+  if (enumValidationErrors.length > 0) {
+    res.status(400).json({
+      message: "Invalid enum values",
+      errors: enumValidationErrors,
+    });
+    return;
+  }
   try {
     const slug = await generateUniqueSlug(carName);
 
@@ -94,6 +239,9 @@ export async function createCarForm(req: Request, res: Response) {
     const validRemainingBalance = parseFloat(remainingBalance);
     const validKeyCount = parseInt(keyCount, 10);
     const validTireSetCount = parseInt(tireSetCount, 10);
+    const validMonthlyPayment = parseFloat(monthlyPayment);
+    const validMonthsRemaining = parseFloat(monthsRemaining);
+    const validPurchaseOptionAmount = parseFloat(purchaseOptionAmount);
     const validIsSoloOwner = isSoloOwner === "true";
     const validIsTradeIn = isTradeIn === "true";
     const validHasOriginalFactoryRims = hasOriginalFactoryRims === "true";
@@ -103,6 +251,18 @@ export async function createCarForm(req: Request, res: Response) {
     const validAdditionalFeature = Array.isArray(additionalFeature)
       ? additionalFeature
       : [additionalFeature];
+
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!existingUser) {
+      res.status(404).json({
+        message: "User not found",
+        error: `No user with id ${userId} exists.`,
+      });
+      return;
+    }
 
     const newCar = await prisma.car.create({
       data: {
@@ -116,6 +276,9 @@ export async function createCarForm(req: Request, res: Response) {
         loanOrLeaseStatus,
         loanCompany,
         remainingBalance: validRemainingBalance,
+        monthlyPayment: validMonthlyPayment,
+        monthsRemaining: validMonthsRemaining,
+        purchaseOptionAmount: validPurchaseOptionAmount,
         isTradeIn: validIsTradeIn,
         plannedSaleTime,
         additionalFeature: validAdditionalFeature,
@@ -125,7 +288,7 @@ export async function createCarForm(req: Request, res: Response) {
         keyCount: validKeyCount,
         tireSetCount: validTireSetCount,
         tireReplacementTimeframe,
-        TiresType,
+        tiresType,
         hasOriginalFactoryRims: validHasOriginalFactoryRims,
         hasMechanicalIssues: validHasMechanicalIssues,
         isDriveable: validIsDriveable,
@@ -136,7 +299,10 @@ export async function createCarForm(req: Request, res: Response) {
       },
     });
 
+    console.log(files);
+
     if (files) {
+      console.log("Masuk Files");
       const fileArray = Array.isArray(files) ? files : [files];
 
       const uploadPromises = fileArray.map(async (file) => {

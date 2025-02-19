@@ -1,52 +1,26 @@
-import express, { Request, Response } from "express";
-import prisma from "../config/prismaClient";
+import express from "express";
+import * as DashboardController from "../controllers/DashboardController";
 
 const router = express.Router();
 
-router.get("/cars", async (req: Request, res: Response) => {
-  try {
-    const cars = await prisma.car.findMany();
-    res.json({
-      message: "success",
-      data: cars,
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Error fetching cars", error });
-  }
-});
+// Car Feature
+router.get("/cars", DashboardController.getAllCars);
+router.get("/cars/this-week", DashboardController.getCarsByWeekHandler);
+router.get("/cars/this-month", DashboardController.getCarsByMonthHandler);
 
-router.patch("/cars/:id/status", async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { statusReview } = req.body;
+// Update Status
+router.patch("/cars/:id/status", DashboardController.changeStatus);
 
-    const validStatuses = [
-      "NeedToReview",
-      "InReview",
-      "Reviewed",
-      "Published",
-      "Rejected",
-    ];
-    if (!statusReview || !validStatuses.includes(statusReview)) {
-      res.status(400).json({
-        message:
-          "Invalid statusReview. Allowed values: " + validStatuses.join(", "),
-      });
-      return;
-    }
-
-    const updatedCar = await prisma.car.update({
-      where: { id },
-      data: { statusReview },
-    });
-
-    res.json({
-      message: "Status updated successfully",
-      data: updatedCar,
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Error updating statusReview", error });
-  }
-});
+// Log Feature
+router.post("/activity-log", DashboardController.createActivityLog);
+router.get("/activity-logs", DashboardController.getAllActivityLogs);
+router.get(
+  "/activity-logs/this-week",
+  DashboardController.getActivityLogsByWeekHandler
+);
+router.get(
+  "/activity-logs/this-month",
+  DashboardController.getActivityLogsByMonthHandler
+);
 
 export default router;

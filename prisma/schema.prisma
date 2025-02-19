@@ -142,8 +142,11 @@ model Car {
   isSoloOwner              Boolean
   color                    String
   loanOrLeaseStatus        LoanOrLeaseStatus
-  loanCompany              String
-  remainingBalance         Int
+  loanCompany              String?
+  remainingBalance         Int?
+  monthlyPayment           Int?
+  monthsRemaining          Int?
+  purchaseOptionAmount     Int?
   isTradeIn                Boolean
   plannedSaleTime          PlannedSaleTime
   additionalFeature        String[]
@@ -153,7 +156,7 @@ model Car {
   keyCount                 Int
   tireSetCount             Int
   tireReplacementTimeframe TireReplacementTimeframe
-  TiresType                TiresType
+  tiresType                TiresType
   hasOriginalFactoryRims   Boolean
   hasMechanicalIssues      Boolean
   isDriveable              Boolean
@@ -178,11 +181,13 @@ model CarImage {
 }
 
 model ActivityLog {
-  id     String @id @default(uuid())
-  Car    Car    @relation(fields: [carId], references: [id])
-  carId  String
-  User   User   @relation(fields: [userId], references: [id])
-  userId String
+  id        String   @id @default(uuid())
+  Car       Car      @relation(fields: [carId], references: [id])
+  carId     String
+  User      User     @relation(fields: [userId], references: [id])
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("activity_logs")
 }

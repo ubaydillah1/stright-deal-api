@@ -27,6 +27,7 @@ router.post(
   validateRequest(["email"]),
   AuthController.forgotPassword
 );
+
 router.get("/reset-password", AuthController.getResetPasswordPage);
 router.post(
   "/reset-password",
