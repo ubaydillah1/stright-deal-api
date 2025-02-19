@@ -88,14 +88,7 @@ app.get("/user", authorize(["User"]), (req, res) => {
   });
 });
 
-app.get("/supabase", (req, res) => {
-  res.json({
-    SupabaseURL: process.env.SUPABASE_URL,
-    Anon: process.env.SUPABASE_ANON_KEY,
-  });
-});
-
-async function testConnection() {
+app.get("/supabase", async (req, res) => {
   try {
     const { data, error } = await supabase.from("users").select("*").limit(1);
 
@@ -103,17 +96,11 @@ async function testConnection() {
       throw error;
     }
 
-    console.log("✅ Connected to Supabase successfully!");
-    console.log("Sample data:", data);
+    res.json({ data });
   } catch (error) {
-    console.error(
-      "❌ Failed to connect to Supabase:",
-      (error as Error).message
-    );
+    res.json(error);
   }
-}
-
-testConnection();
+});
 
 app.post("/image", (req, res) => {
   console.log(req.files);
