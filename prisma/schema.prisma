@@ -60,6 +60,16 @@ enum ExteriorCondition {
   NoExteriorDamage
 }
 
+enum AdditionalFeatures {
+  AftermarketRims
+  CosmeticModifications
+  AftermarketColoredWrap
+  AftermarketSuspension
+  AftermarketExhaust
+  AftermarketStereo
+  AftermarketPerformanceUpgrades
+}
+
 enum InteriorDamage {
   NoticeableStains
   PersistentOdors
@@ -135,7 +145,7 @@ model Car {
   user                     User                     @relation(fields: [userId], references: [id])
   userId                   String
   slug                     String                   @unique
-  vin                      String?
+  vin                      String
   miliage                  Int
   statusReview             StatusReview             @default(NeedToReview)
   transmission_type        TransmissionType
@@ -149,9 +159,10 @@ model Car {
   purchaseOptionAmount     Int?
   isTradeIn                Boolean
   plannedSaleTime          PlannedSaleTime
-  additionalFeature        String[]
-  exteriorCondition        ExteriorCondition
-  interiorDamage           InteriorDamage
+  additionalFeatures       AdditionalFeatures[]
+  anyAdditionalFeatures    String
+  exteriorCondition        ExteriorCondition[]
+  interiorDamage           InteriorDamage[]
   additionalDisclosures    AdditionalDisclosures    @default(NoNothingElseToDisclose)
   keyCount                 Int
   tireSetCount             Int

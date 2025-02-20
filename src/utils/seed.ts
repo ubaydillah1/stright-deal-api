@@ -65,58 +65,58 @@ async function main() {
 
   console.log("Seeding cars...");
 
-  for (let i = 0; i < 20; i++) {
-    await prisma.car.create({
-      data: {
-        userId: faker.helpers.arrayElement(users).id,
-        slug: faker.lorem.slug(),
-        vin: faker.vehicle.vin(),
-        miliage: faker.number.int({ min: 1000, max: 200000 }),
-        statusReview: faker.helpers.arrayElement(Object.values(StatusReview)),
-        transmission_type: faker.helpers.arrayElement(
-          Object.values(TransmissionType)
-        ),
-        isSoloOwner: faker.datatype.boolean(),
-        color: faker.vehicle.color(),
-        loanOrLeaseStatus: faker.helpers.arrayElement(
-          Object.values(LoanOrLeaseStatus)
-        ),
-        loanCompany: faker.company.name(),
-        remainingBalance: faker.number.int({ min: 0, max: 50000 }),
-        isTradeIn: faker.datatype.boolean(),
-        plannedSaleTime: faker.helpers.arrayElement(
-          Object.values(PlannedSaleTime)
-        ),
-        additionalFeature: [faker.vehicle.type(), faker.vehicle.type()],
-        exteriorCondition: faker.helpers.arrayElement(
-          Object.values(ExteriorCondition)
-        ),
-        interiorDamage: faker.helpers.arrayElement(
-          Object.values(InteriorDamage)
-        ),
-        additionalDisclosures: faker.helpers.arrayElement(
-          Object.values(AdditionalDisclosures)
-        ),
-        keyCount: faker.number.int({ min: 1, max: 5 }),
-        tireSetCount: faker.number.int({ min: 1, max: 4 }),
-        tireReplacementTimeframe: faker.helpers.arrayElement(
-          Object.values(TireReplacementTimeframe)
-        ),
-        tiresType: faker.helpers.arrayElement(Object.values(TiresType)),
-        hasOriginalFactoryRims: faker.datatype.boolean(),
-        hasMechanicalIssues: faker.datatype.boolean(),
-        isDriveable: faker.datatype.boolean(),
-        hasAccidentOrClaimStatus: faker.datatype.boolean(),
-        overallConditionStatus: faker.helpers.arrayElement(
-          Object.values(ConditionStatus)
-        ),
-        plannedSaleTimeline: faker.helpers.arrayElement(
-          Object.values(PlannedSaleTimeline)
-        ),
-        createdAt: getRandomDate(),
-      },
-    });
-  }
+  // for (let i = 0; i < 20; i++) {
+  //   await prisma.car.create({
+  //     data: {
+  //       userId: faker.helpers.arrayElement(users).id,
+  //       slug: faker.lorem.slug(),
+  //       vin: faker.vehicle.vin(),
+  //       miliage: faker.number.int({ min: 1000, max: 200000 }),
+  //       statusReview: faker.helpers.arrayElement(Object.values(StatusReview)),
+  //       transmission_type: faker.helpers.arrayElement(
+  //         Object.values(TransmissionType)
+  //       ),
+  //       isSoloOwner: faker.datatype.boolean(),
+  //       color: faker.vehicle.color(),
+  //       loanOrLeaseStatus: faker.helpers.arrayElement(
+  //         Object.values(LoanOrLeaseStatus)
+  //       ),
+  //       loanCompany: faker.company.name(),
+  //       remainingBalance: faker.number.int({ min: 0, max: 50000 }),
+  //       isTradeIn: faker.datatype.boolean(),
+  //       plannedSaleTime: faker.helpers.arrayElement(
+  //         Object.values(PlannedSaleTime)
+  //       ),
+  //       additionalFeature: [faker.vehicle.type(), faker.vehicle.type()],
+  //       exteriorCondition: faker.helpers.arrayElement(
+  //         Object.values(ExteriorCondition)
+  //       ),
+  //       interiorDamage: faker.helpers.arrayElement(
+  //         Object.values(InteriorDamage)
+  //       ),
+  //       additionalDisclosures: faker.helpers.arrayElement(
+  //         Object.values(AdditionalDisclosures)
+  //       ),
+  //       keyCount: faker.number.int({ min: 1, max: 5 }),
+  //       tireSetCount: faker.number.int({ min: 1, max: 4 }),
+  //       tireReplacementTimeframe: faker.helpers.arrayElement(
+  //         Object.values(TireReplacementTimeframe)
+  //       ),
+  //       tiresType: faker.helpers.arrayElement(Object.values(TiresType)),
+  //       hasOriginalFactoryRims: faker.datatype.boolean(),
+  //       hasMechanicalIssues: faker.datatype.boolean(),
+  //       isDriveable: faker.datatype.boolean(),
+  //       hasAccidentOrClaimStatus: faker.datatype.boolean(),
+  //       overallConditionStatus: faker.helpers.arrayElement(
+  //         Object.values(ConditionStatus)
+  //       ),
+  //       plannedSaleTimeline: faker.helpers.arrayElement(
+  //         Object.values(PlannedSaleTimeline)
+  //       ),
+  //       createdAt: getRandomDate(),
+  //     },
+  //   });
+  // }
 
   console.log("Seeding completed!");
 }

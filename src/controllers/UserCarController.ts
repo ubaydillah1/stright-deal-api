@@ -11,15 +11,9 @@ import {
   TiresType,
 } from "@prisma/client";
 import prisma from "../config/prismaClient";
-import { supabase } from "../config/supabaseClient";
 import generateUniqueSlug from "../utils/generateUniqueCarSlug";
 import { Response, Request } from "express";
-
-interface CustomRequest extends Request {
-  files?: {
-    images?: any | any[];
-  };
-}
+import { supabase } from "../config/supabaseClient";
 
 function isValidEnumValue(enumObj: any, value: string): boolean {
   return Object.values(enumObj).includes(value);
@@ -40,8 +34,31 @@ function getEnumValidationError(
   )}`;
 }
 
+function validateStringArray(field: string, value: any): string | null {
+  if (!Array.isArray(value) || value.some((item) => typeof item !== "string")) {
+    return `Invalid ${field}: Must be an array of strings.`;
+  }
+  return null;
+}
+
+function validateEnumArray(
+  enumObj: any,
+  field: string,
+  values: any[]
+): string | null {
+  const invalidValues = values.filter(
+    (value) => !isValidEnumValue(enumObj, value)
+  );
+  if (invalidValues.length > 0) {
+    return `Invalid ${field}: "${invalidValues.join(
+      ", "
+    )}". Available options are: ${getEnumValues(enumObj).join(", ")}`;
+  }
+  return null;
+}
+
 export async function createCarForm(req: Request, res: Response) {
-  const {
+  let {
     miliage,
     transmission_type,
     isSoloOwner,
@@ -54,7 +71,8 @@ export async function createCarForm(req: Request, res: Response) {
     remainingBalance,
     isTradeIn,
     plannedSaleTime,
-    additionalFeature,
+    additionalFeatures,
+    anyAdditionalFeatures,
     exteriorCondition,
     interiorDamage,
     additionalDisclosures,
@@ -69,10 +87,18 @@ export async function createCarForm(req: Request, res: Response) {
     overallConditionStatus,
     plannedSaleTimeline,
     carName,
-    userId,
+    vin,
   } = req.body;
 
-  const files = (req as CustomRequest).files?.images;
+  const userId = (req as any).user.id;
+
+  // Convert string to array if necessary
+  if (typeof exteriorCondition === "string") {
+    exteriorCondition = exteriorCondition.split(",");
+  }
+  if (typeof interiorDamage === "string") {
+    interiorDamage = interiorDamage.split(",");
+  }
 
   // Validate required fields
   const requiredFields = [
@@ -83,7 +109,7 @@ export async function createCarForm(req: Request, res: Response) {
     "loanOrLeaseStatus",
     "isTradeIn",
     "plannedSaleTime",
-    "additionalFeature",
+    "additionalFeatures",
     "exteriorCondition",
     "interiorDamage",
     "additionalDisclosures",
@@ -98,14 +124,13 @@ export async function createCarForm(req: Request, res: Response) {
     "overallConditionStatus",
     "plannedSaleTimeline",
     "carName",
-    "userId",
   ];
 
   const missingFields: string[] = [];
 
   // Check for missing fields
   requiredFields.forEach((field) => {
-    if (!req.body[field]) {
+    if (req.body[field] === undefined || req.body[field] === null) {
       missingFields.push(field);
     }
   });
@@ -163,21 +188,19 @@ export async function createCarForm(req: Request, res: Response) {
     );
   }
 
-  if (!isValidEnumValue(ExteriorCondition, exteriorCondition)) {
-    enumValidationErrors.push(
-      getEnumValidationError(
-        ExteriorCondition,
-        "exteriorCondition",
-        exteriorCondition
-      )
-    );
-  }
+  const exteriorConditionError = validateEnumArray(
+    ExteriorCondition,
+    "exteriorCondition",
+    exteriorCondition
+  );
+  if (exteriorConditionError) enumValidationErrors.push(exteriorConditionError);
 
-  if (!isValidEnumValue(InteriorDamage, interiorDamage)) {
-    enumValidationErrors.push(
-      getEnumValidationError(InteriorDamage, "interiorDamage", interiorDamage)
-    );
-  }
+  const interiorDamageError = validateEnumArray(
+    InteriorDamage,
+    "interiorDamage",
+    interiorDamage
+  );
+  if (interiorDamageError) enumValidationErrors.push(interiorDamageError);
 
   if (!isValidEnumValue(TireReplacementTimeframe, tireReplacementTimeframe)) {
     enumValidationErrors.push(
@@ -225,13 +248,24 @@ export async function createCarForm(req: Request, res: Response) {
     );
   }
 
-  if (enumValidationErrors.length > 0) {
+  // Validate string arrays
+  const arrayValidationErrors: string[] = [];
+
+  const additionalFeaturesError = validateStringArray(
+    "additionalFeatures",
+    additionalFeatures
+  );
+  if (additionalFeaturesError)
+    arrayValidationErrors.push(additionalFeaturesError);
+
+  if (enumValidationErrors.length > 0 || arrayValidationErrors.length > 0) {
     res.status(400).json({
-      message: "Invalid enum values",
-      errors: enumValidationErrors,
+      message: "Validation errors",
+      errors: [...enumValidationErrors, ...arrayValidationErrors],
     });
     return;
   }
+
   try {
     const slug = await generateUniqueSlug(carName);
 
@@ -248,9 +282,6 @@ export async function createCarForm(req: Request, res: Response) {
     const validHasMechanicalIssues = hasMechanicalIssues === "true";
     const validIsDriveable = isDriveable === "true";
     const validHasAccidentOrClaimStatus = hasAccidentOrClaimStatus === "true";
-    const validAdditionalFeature = Array.isArray(additionalFeature)
-      ? additionalFeature
-      : [additionalFeature];
 
     const existingUser = await prisma.user.findUnique({
       where: { id: userId },
@@ -281,7 +312,8 @@ export async function createCarForm(req: Request, res: Response) {
         purchaseOptionAmount: validPurchaseOptionAmount,
         isTradeIn: validIsTradeIn,
         plannedSaleTime,
-        additionalFeature: validAdditionalFeature,
+        additionalFeatures,
+        anyAdditionalFeatures,
         exteriorCondition,
         interiorDamage,
         additionalDisclosures,
@@ -296,52 +328,85 @@ export async function createCarForm(req: Request, res: Response) {
         overallConditionStatus,
         plannedSaleTimeline,
         slug,
+        vin,
       },
     });
 
-    console.log(files);
-
-    if (files) {
-      const fileArray = Array.isArray(files) ? files : [files];
-
-      const uploadPromises = fileArray.map(async (file) => {
-        const fileName = `${newCar.id}_${Date.now()}_${file.name}`;
-
-        const { data, error } = await supabase.storage
-          .from("car-images")
-          .upload(fileName, file.data, {
-            contentType: file.mimetype,
-          });
-
-        if (error) throw new Error(`Upload failed: ${error.message}`);
-
-        const {
-          data: { publicUrl },
-        } = supabase.storage.from("car-images").getPublicUrl(fileName);
-
-        await prisma.carImage.create({
-          data: {
-            carId: newCar.id,
-            imageUrl: publicUrl,
-          },
-        });
-
-        return publicUrl;
-      });
-
-      await Promise.all(uploadPromises);
-    }
-
-    const carWithImages = await prisma.car.findUnique({
-      where: { id: newCar.id },
-      include: {
-        CarImages: true,
-      },
-    });
-
-    res.status(201).json(carWithImages);
+    res.status(201).json(newCar);
   } catch (error) {
     const e = error as Error;
     res.status(500).json({ message: "Error creating car", error: e.message });
+  }
+}
+
+interface CustomRequest extends Request {
+  files?: {
+    images?: any | any[];
+  };
+}
+
+export async function uploadImages(req: Request, res: Response) {
+  const { carId } = req.body;
+  const files = (req as CustomRequest).files?.images;
+
+  if (!carId) {
+    res.status(400).json({ message: "Car ID is required" });
+    return;
+  }
+
+  if (!files || (Array.isArray(files) && files.length === 0)) {
+    res.status(400).json({ message: "No images provided" });
+    return;
+  }
+
+  try {
+    // Pastikan files adalah array
+    const fileArray = Array.isArray(files) ? files : [files];
+
+    // Upload setiap file ke Supabase
+    const uploadPromises = fileArray.map(async (file) => {
+      const fileName = `${carId}_${Date.now()}_${file.name}`;
+
+      // Upload file ke Supabase Storage
+      const { data, error } = await supabase.storage
+        .from("car-images")
+        .upload(fileName, file.data, {
+          contentType: file.mimetype,
+        });
+
+      if (error) {
+        throw new Error(`Upload failed: ${error.message}`);
+      }
+
+      // Dapatkan URL publik file yang diunggah
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("car-images").getPublicUrl(fileName);
+
+      // Simpan URL gambar ke database menggunakan Prisma
+      await prisma.carImage.create({
+        data: {
+          carId,
+          imageUrl: publicUrl,
+        },
+      });
+
+      return publicUrl;
+    });
+
+    // Tunggu semua file selesai diunggah
+    const uploadedUrls = await Promise.all(uploadPromises);
+
+    // Kirim respons sukses
+    res.status(201).json({
+      message: "Images uploaded successfully",
+      carId,
+      imageUrls: uploadedUrls,
+    });
+  } catch (error) {
+    const e = error as Error;
+    res
+      .status(500)
+      .json({ message: "Error uploading images", error: e.message });
   }
 }
