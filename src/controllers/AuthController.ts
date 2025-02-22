@@ -16,7 +16,6 @@ import { sendEmail } from "../utils/emailServiceSand";
 import getAccessTokenFromRefreshToken from "../utils/getAccessTokenFromRefreshToken";
 import { z } from "zod";
 import { isValidPhoneNumber } from "libphonenumber-js";
-import { google } from "googleapis";
 
 const serverUrl = process.env.SERVER_URL;
 const clientUrl = process.env.CLIENT_URL;
@@ -56,7 +55,12 @@ const registerSchema = z.object({
 
 export const getPhoneOTP = async (req: Request, res: Response) => {
   try {
-    const { phoneNumber } = req.body;
+    const { email, phoneNumber } = req.body;
+
+    if (!email || !phoneNumber) {
+      res.status(400).json({ message: "Email and phone number are required" });
+      return;
+    }
 
     if (!isValidPhoneNumber(phoneNumber)) {
       res.status(400).json({
@@ -66,8 +70,9 @@ export const getPhoneOTP = async (req: Request, res: Response) => {
       return;
     }
 
+    // Cari user berdasarkan email
     const user = await prisma.user.findUnique({
-      where: { phoneNumber },
+      where: { email },
     });
 
     if (!user) {
@@ -79,8 +84,9 @@ export const getPhoneOTP = async (req: Request, res: Response) => {
     const expiredAt = getOtpExpiration();
 
     await prisma.user.update({
-      where: { phoneNumber },
+      where: { email },
       data: {
+        phoneNumber,
         phoneOtpToken: otp,
         expiredPhoneOtpToken: expiredAt,
       },
@@ -178,12 +184,16 @@ export async function verifyEmail(req: Request, res: Response) {
       id: user.id,
       email: user.email,
       role: user.role,
+      isPhoneNumberVerified: user.isPhoneVerified,
+      isEmailVerified: user.isEmailVerified
     });
 
     const refreshToken = generateRefreshToken({
       id: user.id,
       email: user.email,
       role: user.role,
+      isPhoneNumberVerified: user.isPhoneVerified,
+      isEmailVerified: user.isEmailVerified
     });
 
     await prisma.user.update({
@@ -196,11 +206,15 @@ export async function verifyEmail(req: Request, res: Response) {
       },
     });
 
-    res.json({
-      message: "Email verified successfully",
-      accessToken,
-      refreshToken,
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      sameSite: "none",
+      secure: true,
     });
+
+    res.redirect(
+      `${clientUrl}/authentication/input-phone-number?status=verify_email&access_token=${accessToken}`
+    );
   } catch (error: unknown) {
     const e = error as Error;
     res.status(500).json({
@@ -294,7 +308,7 @@ export async function register(req: Request, res: Response) {
     await sendEmail(
       email,
       "Email Verification",
-      `<p>Please click the following link to verify your email: ${verificationLink}</p>`
+      `<p>Please click the following link to verify your email: <a href="${verificationLink}">${verificationLink}</a></p>`
     );
 
     res.status(201).json({
@@ -343,12 +357,16 @@ export async function login(req: Request, res: Response) {
       id: existingUser.id,
       email: existingUser.email,
       role: existingUser.role,
+      isPhoneNumberVerified: existingUser.isPhoneVerified,
+      isEmailVerified: existingUser.isEmailVerified
     });
 
     const refreshToken = generateRefreshToken({
       id: existingUser.id,
       email: existingUser.email,
       role: existingUser.role,
+      isPhoneNumberVerified: existingUser.isPhoneVerified,
+      isEmailVerified: existingUser.isEmailVerified
     });
 
     await prisma.user.update({
@@ -414,7 +432,13 @@ export async function googleCallback(req: Request, res: Response) {
       where: { email: userProfil.email },
     });
 
-    if (!existingUser) {
+    if (existingUser) {
+      if (existingUser.provider !== "Google") {
+        return res.redirect(
+          `${clientUrl}/failed?status=login&error=account_exists_manual`
+        );
+      }
+    } else {
       existingUser = await prisma.user.create({
         data: {
           email: userProfil.email,
@@ -437,12 +461,16 @@ export async function googleCallback(req: Request, res: Response) {
       id: existingUser.id,
       email: existingUser.email,
       role: existingUser.role,
+      isPhoneNumberVerified: existingUser.isPhoneVerified,
+      isEmailVerified: existingUser.isEmailVerified,
     });
 
     const refreshToken = generateRefreshToken({
       id: existingUser.id,
       email: existingUser.email,
       role: existingUser.role,
+      isPhoneNumberVerified: existingUser.isPhoneVerified,
+      isEmailVerified: existingUser.isEmailVerified,
     });
 
     await prisma.user.update({
@@ -470,7 +498,7 @@ export async function getTokenCookies(req: Request, res: Response) {
   const refreshToken = req.cookies.refreshToken;
 
   if (!refreshToken) {
-    res.status(401).json({ error: "No refresh k found" });
+    res.status(401).json({ error: "No refresh token found" });
     return;
   }
 
