@@ -136,6 +136,7 @@ export const verifyPhoneOTP = async (req: Request, res: Response) => {
         phoneOtpToken: null,
         expiredPhoneOtpToken: null,
         isPhoneVerified: true,
+        role: "User",
       },
     });
 
@@ -204,7 +205,6 @@ export async function verifyEmail(req: Request, res: Response) {
         emailVerificationToken: null,
         emailVerificationTokenExpiry: null,
         refreshToken,
-        role: "User",
       },
     });
 
