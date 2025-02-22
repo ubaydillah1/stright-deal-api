@@ -259,31 +259,25 @@ export async function register(req: Request, res: Response) {
   try {
     const parsedBody = registerSchema.safeParse(req.body);
     if (!parsedBody.success) {
-      res
-        .status(400)
-        .json({ message: "Invalid input", errors: parsedBody.error.format() });
+      const errorMessage = parsedBody.error.issues[0].message;
+      res.status(400).json({ message: `${errorMessage}` });
       return;
     }
 
     const { firstName, lastName, email, password } = parsedBody.data;
-
     const existingUser = await prisma.user.findUnique({ where: { email } });
 
     if (existingUser) {
-      if (existingUser.isEmailVerified) {
-        res.status(400).json({ message: "Email is already in use" });
-        return;
-      }
-
-      res
-        .status(400)
-        .json({ message: "Email is already registered but not verified" });
+      const message = existingUser.isEmailVerified
+        ? "Email is already in use"
+        : "Email is already registered but not verified";
+      res.status(400).json({ message });
       return;
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const emailVerificationToken = v4();
-    const emailVerificationTokenExpiry = new Date(Date.now() + 1000 * 60 * 30); // Expiry in 30 minutes
+    const emailVerificationTokenExpiry = new Date(Date.now() + 1000 * 60 * 30);
 
     await prisma.user.create({
       data: {
@@ -297,7 +291,6 @@ export async function register(req: Request, res: Response) {
     });
 
     const verificationLink = `${serverUrl}/api/auth/verify-email?token=${emailVerificationToken}`;
-
     await sendEmail(
       email,
       "Email Verification",
