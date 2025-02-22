@@ -55,7 +55,8 @@ const registerSchema = z.object({
 
 export const getPhoneOTP = async (req: Request, res: Response) => {
   try {
-    const { email, phoneNumber } = req.body;
+    const { phoneNumber } = req.body;
+    const email = (req as any).user.email;
 
     if (!email || !phoneNumber) {
       res.status(400).json({ message: "Email and phone number are required" });
@@ -185,7 +186,7 @@ export async function verifyEmail(req: Request, res: Response) {
       email: user.email,
       role: user.role,
       isPhoneNumberVerified: user.isPhoneVerified,
-      isEmailVerified: user.isEmailVerified
+      isEmailVerified: user.isEmailVerified,
     });
 
     const refreshToken = generateRefreshToken({
@@ -193,7 +194,7 @@ export async function verifyEmail(req: Request, res: Response) {
       email: user.email,
       role: user.role,
       isPhoneNumberVerified: user.isPhoneVerified,
-      isEmailVerified: user.isEmailVerified
+      isEmailVerified: user.isEmailVerified,
     });
 
     await prisma.user.update({
@@ -358,7 +359,7 @@ export async function login(req: Request, res: Response) {
       email: existingUser.email,
       role: existingUser.role,
       isPhoneNumberVerified: existingUser.isPhoneVerified,
-      isEmailVerified: existingUser.isEmailVerified
+      isEmailVerified: existingUser.isEmailVerified,
     });
 
     const refreshToken = generateRefreshToken({
@@ -366,7 +367,7 @@ export async function login(req: Request, res: Response) {
       email: existingUser.email,
       role: existingUser.role,
       isPhoneNumberVerified: existingUser.isPhoneVerified,
-      isEmailVerified: existingUser.isEmailVerified
+      isEmailVerified: existingUser.isEmailVerified,
     });
 
     await prisma.user.update({
