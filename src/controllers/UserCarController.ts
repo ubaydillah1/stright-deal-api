@@ -85,10 +85,9 @@ export async function createCarForm(req: Request, res: Response) {
     hasAccidentOrClaimStatus,
     overallConditionStatus,
     plannedSaleTimeline,
-    userId,
   } = req.body;
 
-  // const userId = (req as any).user.id;
+  const userId = (req as any).user.id;
 
   // Convert string to array if necessary
   if (typeof exteriorCondition === "string") {
