@@ -214,7 +214,7 @@ export async function verifyEmail(req: Request, res: Response) {
     });
 
     res.redirect(
-      `${clientUrl}/authentication/input-phone-number?status=verify_email&access_token=${accessToken}`
+      `${clientUrl}/success?status=verify_email&access_token=${accessToken}`
     );
   } catch (error: unknown) {
     const e = error as Error;
