@@ -11,7 +11,6 @@ import {
   TiresType,
 } from "@prisma/client";
 import prisma from "../config/prismaClient";
-import generateUniqueSlug from "../utils/generateUniqueCarSlug";
 import { Response, Request } from "express";
 import { supabase } from "../config/supabaseClient";
 
@@ -60,8 +59,8 @@ function validateEnumArray(
 export async function createCarForm(req: Request, res: Response) {
   let {
     miliage,
-    transmission_type,
-    isSoloOwner,
+    transmissionType,
+    isSoleOwner,
     color,
     loanOrLeaseStatus,
     loanCompany,
@@ -86,11 +85,10 @@ export async function createCarForm(req: Request, res: Response) {
     hasAccidentOrClaimStatus,
     overallConditionStatus,
     plannedSaleTimeline,
-    carName,
-    vin,
+    userId,
   } = req.body;
 
-  const userId = (req as any).user.id;
+  // const userId = (req as any).user.id;
 
   // Convert string to array if necessary
   if (typeof exteriorCondition === "string") {
@@ -103,8 +101,8 @@ export async function createCarForm(req: Request, res: Response) {
   // Validate required fields
   const requiredFields = [
     "miliage",
-    "transmission_type",
-    "isSoloOwner",
+    "transmissionType",
+    "isSoleOwner",
     "color",
     "loanOrLeaseStatus",
     "isTradeIn",
@@ -123,7 +121,6 @@ export async function createCarForm(req: Request, res: Response) {
     "hasAccidentOrClaimStatus",
     "overallConditionStatus",
     "plannedSaleTimeline",
-    "carName",
   ];
 
   const missingFields: string[] = [];
@@ -158,12 +155,12 @@ export async function createCarForm(req: Request, res: Response) {
   // Validate enum values
   const enumValidationErrors: string[] = [];
 
-  if (!isValidEnumValue(TransmissionType, transmission_type)) {
+  if (!isValidEnumValue(TransmissionType, transmissionType)) {
     enumValidationErrors.push(
       getEnumValidationError(
         TransmissionType,
-        "transmission_type",
-        transmission_type
+        "transmissionType",
+        transmissionType
       )
     );
   }
@@ -267,8 +264,6 @@ export async function createCarForm(req: Request, res: Response) {
   }
 
   try {
-    const slug = await generateUniqueSlug(carName);
-
     const validMileage = parseInt(miliage, 10);
     const validRemainingBalance = parseFloat(remainingBalance);
     const validKeyCount = parseInt(keyCount, 10);
@@ -276,12 +271,6 @@ export async function createCarForm(req: Request, res: Response) {
     const validMonthlyPayment = parseFloat(monthlyPayment);
     const validMonthsRemaining = parseFloat(monthsRemaining);
     const validPurchaseOptionAmount = parseFloat(purchaseOptionAmount);
-    const validIsSoloOwner = isSoloOwner === "true";
-    const validIsTradeIn = isTradeIn === "true";
-    const validHasOriginalFactoryRims = hasOriginalFactoryRims === "true";
-    const validHasMechanicalIssues = hasMechanicalIssues === "true";
-    const validIsDriveable = isDriveable === "true";
-    const validHasAccidentOrClaimStatus = hasAccidentOrClaimStatus === "true";
 
     const existingUser = await prisma.user.findUnique({
       where: { id: userId },
@@ -301,8 +290,8 @@ export async function createCarForm(req: Request, res: Response) {
           connect: { id: userId },
         },
         miliage: validMileage,
-        transmission_type,
-        isSoloOwner: validIsSoloOwner,
+        transmissionType,
+        isSoleOwner,
         color,
         loanOrLeaseStatus,
         loanCompany,
@@ -310,7 +299,7 @@ export async function createCarForm(req: Request, res: Response) {
         monthlyPayment: validMonthlyPayment,
         monthsRemaining: validMonthsRemaining,
         purchaseOptionAmount: validPurchaseOptionAmount,
-        isTradeIn: validIsTradeIn,
+        isTradeIn,
         plannedSaleTime,
         additionalFeatures,
         anyAdditionalFeatures,
@@ -321,14 +310,12 @@ export async function createCarForm(req: Request, res: Response) {
         tireSetCount: validTireSetCount,
         tireReplacementTimeframe,
         tiresType,
-        hasOriginalFactoryRims: validHasOriginalFactoryRims,
-        hasMechanicalIssues: validHasMechanicalIssues,
-        isDriveable: validIsDriveable,
-        hasAccidentOrClaimStatus: validHasAccidentOrClaimStatus,
+        hasOriginalFactoryRims,
+        hasMechanicalIssues,
+        isDriveable,
+        hasAccidentOrClaimStatus,
         overallConditionStatus,
         plannedSaleTimeline,
-        slug,
-        vin,
       },
     });
 
