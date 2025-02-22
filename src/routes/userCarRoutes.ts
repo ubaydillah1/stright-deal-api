@@ -8,7 +8,7 @@ const router = express.Router();
 router.post("/car", authorize([Role.User]), UserCarController.createCarForm);
 router.post(
   "/upload-images-car",
-  authorize([Role.User]),
+  authorize([Role.User, Role.Visitor]),
   UserCarController.uploadImages
 );
 
