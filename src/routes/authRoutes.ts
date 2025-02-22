@@ -36,11 +36,8 @@ router.post(
 );
 
 // Email verification after register
-router.post(
-  "/verify-email",
-  validateRequest(["email", "otp"]),
-  AuthController.verifyEmail
-);
+router.get("/verify-email", AuthController.verifyEmail);
+
 router.post(
   "/resend-verification-email",
   validateRequest(["email"]),
@@ -50,17 +47,6 @@ router.post(
 // Google Auth
 router.get("/google", AuthController.googleAuth);
 router.get("/google/callback", AuthController.googleCallback);
-router.get(
-  "/google/calendar",
-  authorize([Role.User]),
-  AuthController.requestAdditionalScopesForGoogleCalendar
-);
-
-router.post(
-  "/google/calendar",
-  authorize([Role.User]),
-  AuthController.createGoogleCalendarEvent
-);
 
 // Get token from cookies
 router.get("/get-token-cookies", AuthController.getTokenCookies);

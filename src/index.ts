@@ -130,16 +130,6 @@ app.get("/prisma", async (req, res) => {
   }
 });
 
-app.post("/pertanyaan", (req, res) => {});
-
-// ===========================================
-app.get("/affan", (req, res) => {
-  res.status(200).json({
-    jawaban: "Ini dari affan",
-  });
-});
-// ===========================================
-
 app.get("*", (req: Request, res: Response) => {
   res.json({
     Error: "Not Found",

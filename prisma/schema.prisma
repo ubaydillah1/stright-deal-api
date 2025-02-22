@@ -108,33 +108,28 @@ enum TiresType {
 }
 
 model User {
-  id                      String        @id @default(uuid())
-  email                   String        @unique
-  firstName               String
-  lastName                String
-  password                String?
-  isEmailVerified         Boolean       @default(false)
-  emailOtpToken           String?
-  expiredEmailOtpToken    DateTime?
-  phoneNumber             String?       @unique
-  isPhoneVerified         Boolean       @default(false)
-  phoneOtpToken           String?
-  expiredPhoneOtpToken    DateTime?
-  refreshToken            String?
-  resetToken              String?
-  resetTokenExpiry        DateTime?
-  provider                Provider      @default(Local)
-  avatar                  String?
-  role                    Role          @default(Visitor)
-  activityLogs            ActivityLog[]
-  Cars                    Car[]
-  googleAccessToken       String?
-  googleRefreshToken      String?
-  googleCalendarConnected Boolean       @default(false)
-  googleMeetConnected     Boolean       @default(false)
-  googleLastConnectedAt   DateTime?
-  createdAt               DateTime      @default(now())
-  updatedAt               DateTime      @updatedAt
+  id                           String        @id @default(uuid())
+  email                        String        @unique
+  firstName                    String
+  lastName                     String
+  password                     String?
+  isEmailVerified              Boolean       @default(false)
+  emailVerificationToken       String?
+  emailVerificationTokenExpiry DateTime?
+  phoneNumber                  String?       @unique
+  isPhoneVerified              Boolean       @default(false)
+  phoneOtpToken                String?
+  expiredPhoneOtpToken         DateTime?
+  refreshToken                 String?
+  resetToken                   String?
+  resetTokenExpiry             DateTime?
+  provider                     Provider      @default(Local)
+  avatar                       String?
+  role                         Role          @default(Visitor)
+  activityLogs                 ActivityLog[]
+  Cars                         Car[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([phoneNumber])
   @@map("users")
