@@ -73,4 +73,11 @@ router.post(
   AuthController.refreshTokenHandler
 );
 
+// Get all User
+router.get(
+  "/get-user",
+  authorize([Role.Visitor, Role.User, Role.Admin]),
+  AuthController.getUser
+);
+
 export default router;

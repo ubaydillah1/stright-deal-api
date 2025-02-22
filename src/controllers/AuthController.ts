@@ -185,20 +185,14 @@ export async function verifyEmail(req: Request, res: Response) {
     const accessToken = generateAccessToken({
       id: user.id,
       email: user.email,
-      role: user.role,
-      isPhoneNumberVerified: user.isPhoneVerified,
-      isEmailVerified: user.isEmailVerified,
     });
 
     const refreshToken = generateRefreshToken({
       id: user.id,
       email: user.email,
-      role: user.role,
-      isPhoneNumberVerified: user.isPhoneVerified,
-      isEmailVerified: user.isEmailVerified,
     });
 
-    await prisma.user.update({
+    const existingUser = await prisma.user.update({
       where: { id: user.id },
       data: {
         isEmailVerified: true,
@@ -207,6 +201,8 @@ export async function verifyEmail(req: Request, res: Response) {
         refreshToken,
       },
     });
+
+    console.log(existingUser);
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
@@ -358,17 +354,11 @@ export async function login(req: Request, res: Response) {
     const accessToken = generateAccessToken({
       id: existingUser.id,
       email: existingUser.email,
-      role: existingUser.role,
-      isPhoneNumberVerified: existingUser.isPhoneVerified,
-      isEmailVerified: existingUser.isEmailVerified,
     });
 
     const refreshToken = generateRefreshToken({
       id: existingUser.id,
       email: existingUser.email,
-      role: existingUser.role,
-      isPhoneNumberVerified: existingUser.isPhoneVerified,
-      isEmailVerified: existingUser.isEmailVerified,
     });
 
     await prisma.user.update({
@@ -462,17 +452,11 @@ export async function googleCallback(req: Request, res: Response) {
     const accessToken = generateAccessToken({
       id: existingUser.id,
       email: existingUser.email,
-      role: existingUser.role,
-      isPhoneNumberVerified: existingUser.isPhoneVerified,
-      isEmailVerified: existingUser.isEmailVerified,
     });
 
     const refreshToken = generateRefreshToken({
       id: existingUser.id,
       email: existingUser.email,
-      role: existingUser.role,
-      isPhoneNumberVerified: existingUser.isPhoneVerified,
-      isEmailVerified: existingUser.isEmailVerified,
     });
 
     await prisma.user.update({
@@ -656,5 +640,32 @@ export async function refreshTokenHandler(req: Request, res: Response) {
     res.json({ accessToken: result.accessToken });
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+export async function getUser(req: Request, res: Response) {
+  try {
+    const user = (req as any).user;
+
+    const userData = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: {
+        id: true,
+        email: true,
+        isEmailVerified: true,
+        isPhoneVerified: true,
+        role: true,
+        createdAt: true,
+      },
+    });
+
+    if (!userData) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    res.json(userData);
+  } catch (error) {
+    res.status(500).json({ message: "Internal Server Error" });
   }
 }
