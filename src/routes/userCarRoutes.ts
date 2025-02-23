@@ -5,11 +5,7 @@ import { Role } from "@prisma/client";
 
 const router = express.Router();
 
-router.post("/car", authorize([Role.User]), UserCarController.createCarForm);
-router.post(
-  "/upload-images-car",
-  authorize([Role.User]),
-  UserCarController.uploadImages
-);
+router.post("/car", UserCarController.createCarForm);
+router.post("/upload-images-car", UserCarController.uploadImages);
 
 export default router;

@@ -54,14 +54,14 @@ router.get("/get-token-cookies", AuthController.getTokenCookies);
 // Get OTP
 router.post(
   "/get-phone-otp",
-  authorize([Role.Visitor]),
+  authorize([Role.Visitor, Role.User]),
   validateRequest(["phoneNumber"]),
   AuthController.getPhoneOTP
 );
 
 router.post(
   "/verify-phone-otp",
-  authorize([Role.Visitor]),
+  authorize([Role.Visitor, Role.User]),
   validateRequest(["phoneNumber", "otp"]),
   AuthController.verifyPhoneOTP
 );
