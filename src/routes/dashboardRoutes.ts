@@ -1,5 +1,7 @@
 import express from "express";
 import * as DashboardController from "../controllers/DashboardController";
+import { authorize } from "../middlewares/authorize";
+import { Role } from "@prisma/client";
 
 const router = express.Router();
 

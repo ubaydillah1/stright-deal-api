@@ -73,7 +73,7 @@ router.post(
   AuthController.refreshTokenHandler
 );
 
-// Get all User
+// Get User
 router.get(
   "/get-user",
   authorize([Role.Visitor, Role.User, Role.Admin]),
