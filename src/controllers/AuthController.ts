@@ -199,10 +199,9 @@ export async function verifyEmail(req: Request, res: Response) {
         emailVerificationToken: null,
         emailVerificationTokenExpiry: null,
         refreshToken,
+        role: "User",
       },
     });
-
-    console.log(existingUser);
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
