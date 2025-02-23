@@ -114,14 +114,14 @@ model User {
   lastName                     String
   password                     String?
   isEmailVerified              Boolean       @default(false)
-  emailVerificationToken       String?
+  emailVerificationToken       String?       @unique
   emailVerificationTokenExpiry DateTime?
   phoneNumber                  String?       @unique
   isPhoneVerified              Boolean       @default(false)
-  phoneOtpToken                String?
+  phoneOtpToken                String?       @unique
   expiredPhoneOtpToken         DateTime?
-  refreshToken                 String?
-  resetToken                   String?
+  refreshToken                 String?       @unique
+  resetToken                   String?       @unique
   resetTokenExpiry             DateTime?
   provider                     Provider      @default(Local)
   avatar                       String?

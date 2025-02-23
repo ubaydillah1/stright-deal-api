@@ -16,6 +16,7 @@ import { sendEmail } from "../utils/emailServiceSand";
 import getAccessTokenFromRefreshToken from "../utils/getAccessTokenFromRefreshToken";
 import { z } from "zod";
 import { isValidPhoneNumber } from "libphonenumber-js";
+import { TokenExpiredError } from "jsonwebtoken";
 
 const serverUrl = process.env.SERVER_URL;
 const clientUrl = process.env.CLIENT_URL;
@@ -544,7 +545,7 @@ export async function forgotPassword(req: Request, res: Response) {
       data: { resetToken, resetTokenExpiry },
     });
 
-    const resetLink = `${serverUrl}/api/auth/reset-password?k=${resetToken}`;
+    const resetLink = `${serverUrl}/api/auth/reset-password?token=${resetToken}`;
 
     await sendEmail(
       email,
@@ -562,19 +563,21 @@ export async function forgotPassword(req: Request, res: Response) {
 
 export async function getResetPasswordPage(req: Request, res: Response) {
   try {
-    const { k } = req.query;
+    const { token } = req.query;
 
-    if (!k) {
-      res.status(400).json({ message: "Invalid k" });
+    console.log(token);
+
+    if (!TokenExpiredError) {
+      res.status(400).json({ message: "Invalid token" });
       return;
     }
 
     const user = await prisma.user.findFirst({
-      where: { resetToken: k as string },
+      where: { resetToken: token as string },
     });
 
     if (!user || !user.resetTokenExpiry || new Date() > user.resetTokenExpiry) {
-      res.status(400).json({ message: "Invalid or expired k." });
+      res.status(400).json({ message: "Invalid or expired token." });
       return;
     }
 
@@ -586,7 +589,7 @@ export async function getResetPasswordPage(req: Request, res: Response) {
 
 export async function resetPassword(req: Request, res: Response) {
   try {
-    const { k, newPassword } = req.body;
+    const { token, newPassword } = req.body;
 
     const passwordValidation = passwordSchema.safeParse(newPassword);
     if (!passwordValidation.success) {
@@ -599,11 +602,11 @@ export async function resetPassword(req: Request, res: Response) {
     }
 
     const user = await prisma.user.findFirst({
-      where: { resetToken: k, resetTokenExpiry: { gte: new Date() } },
+      where: { resetToken: token, resetTokenExpiry: { gte: new Date() } },
     });
 
     if (!user) {
-      res.status(400).json({ message: "Invalid or expired k" });
+      res.status(400).json({ message: "Invalid or expired token" });
       return;
     }
 
