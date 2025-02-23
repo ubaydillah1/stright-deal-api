@@ -199,7 +199,6 @@ export async function verifyEmail(req: Request, res: Response) {
         emailVerificationToken: null,
         emailVerificationTokenExpiry: null,
         refreshToken,
-        role: "User",
       },
     });
 
