@@ -12,7 +12,6 @@ router.get("/cars/this-month", DashboardController.getCarsByMonthHandler);
 router.patch("/cars/status", DashboardController.changeStatus);
 
 // Log Feature
-router.post("/activity-log", DashboardController.createActivityLog);
 router.get("/activity-logs", DashboardController.getAllActivityLogs);
 router.get(
   "/activity-logs/this-week",

@@ -15,7 +15,6 @@ export const getActivityLogsByWeekQuery = async () => {
     },
     include: {
       Car: true,
-      User: true,
     },
   });
 };
@@ -31,7 +30,6 @@ export const getActivityLogsByMonthQuery = async () => {
     },
     include: {
       Car: true,
-      User: true,
     },
   });
 };

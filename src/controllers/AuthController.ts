@@ -364,12 +364,12 @@ export async function login(req: Request, res: Response) {
       return;
     }
 
-    if (existingUser.isEmailVerified) {
+    if (!existingUser.isEmailVerified) {
       res.status(403).json({ message: "Email user is not verified" });
       return;
     }
 
-    if (existingUser.isPhoneVerified) {
+    if (!existingUser.isPhoneVerified) {
       res.status(403).json({ message: "Phone number is not verified" });
       return;
     }

@@ -108,28 +108,27 @@ enum TiresType {
 }
 
 model User {
-  id                           String        @id @default(uuid())
-  email                        String        @unique
+  id                           String    @id @default(uuid())
+  email                        String    @unique
   firstName                    String
   lastName                     String
   password                     String?
-  isEmailVerified              Boolean       @default(false)
-  emailVerificationToken       String?       @unique
+  isEmailVerified              Boolean   @default(false)
+  emailVerificationToken       String?   @unique
   emailVerificationTokenExpiry DateTime?
-  phoneNumber                  String?       @unique
-  isPhoneVerified              Boolean       @default(false)
-  phoneOtpToken                String?       @unique
+  phoneNumber                  String?   @unique
+  isPhoneVerified              Boolean   @default(false)
+  phoneOtpToken                String?   @unique
   expiredPhoneOtpToken         DateTime?
-  refreshToken                 String?       @unique
-  resetToken                   String?       @unique
+  refreshToken                 String?   @unique
+  resetToken                   String?   @unique
   resetTokenExpiry             DateTime?
-  provider                     Provider      @default(Local)
+  provider                     Provider  @default(Local)
   avatar                       String?
-  role                         Role          @default(Visitor)
-  activityLogs                 ActivityLog[]
+  role                         Role      @default(Visitor)
   Cars                         Car[]
-  createdAt                    DateTime      @default(now())
-  updatedAt                    DateTime      @updatedAt
+  createdAt                    DateTime  @default(now())
+  updatedAt                    DateTime  @updatedAt
 
   @@index([phoneNumber])
   @@map("users")
@@ -169,6 +168,7 @@ model Car {
   hasAccidentOrClaimStatus Boolean
   overallConditionStatus   ConditionStatus
   plannedSaleTimeline      PlannedSaleTimeline
+  seen                     Boolean                  @default(false)
   activityLogs             ActivityLog[]
   CarImages                CarImage[]
   createdAt                DateTime                 @default(now())
@@ -190,8 +190,7 @@ model ActivityLog {
   id        String   @id @default(uuid())
   Car       Car      @relation(fields: [carId], references: [id])
   carId     String
-  User      User     @relation(fields: [userId], references: [id])
-  userId    String
+  notes     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

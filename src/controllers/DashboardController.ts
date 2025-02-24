@@ -63,39 +63,14 @@ export async function changeStatus(req: Request, res: Response) {
       data: { statusReview },
     });
 
+    console.log(updatedCar);
+
     res.json({
       message: "Status updated successfully",
       data: updatedCar,
     });
   } catch (error) {
     res.status(500).json({ message: "Error updating statusReview", error });
-  }
-}
-
-export async function createActivityLog(req: Request, res: Response) {
-  try {
-    const { carId, userId } = req.body;
-
-    if (!carId || !userId) {
-      res.status(400).json({ message: "carId dan userId diperlukan." });
-      return;
-    }
-
-    const activityLog = await prisma.activityLog.create({
-      data: {
-        carId,
-        userId,
-      },
-    });
-
-    res.status(201).json({
-      message: "Activity log berhasil dibuat.",
-      data: activityLog,
-    });
-  } catch (error) {
-    res.status(500).json({
-      error: error instanceof Error ? error.message : "Unknown error",
-    });
   }
 }
 
