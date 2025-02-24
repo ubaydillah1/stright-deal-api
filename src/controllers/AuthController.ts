@@ -346,7 +346,7 @@ export async function login(req: Request, res: Response) {
     }
 
     if (!existingUser.isEmailVerified) {
-      res.status(403).json({ message: "User not verified" });
+      res.status(403).json({ message: "Email user is not verified" });
       return;
     }
 
@@ -356,12 +356,10 @@ export async function login(req: Request, res: Response) {
     }
 
     if (existingUser.password === null) {
-      res
-        .status(400)
-        .json({
-          message:
-            "This account was registered using social login. Please log in with your social account.",
-        });
+      res.status(400).json({
+        message:
+          "This account was registered using social login. Please log in with your social account.",
+      });
       return;
     }
 
