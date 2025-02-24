@@ -256,7 +256,7 @@ export async function resendVerificationEmail(req: Request, res: Response) {
     await sendEmail(
       email,
       "Resend Email Verification",
-      `<p>Please click the following link to verify your email: ${verificationLink}</p>`
+      `<p>Please click the following link to verify your email: <a href="${verificationLink}">Verify Email</a></p>`
     );
 
     res.json({ message: "Verification email resent successfully" });
@@ -316,7 +316,7 @@ export async function register(req: Request, res: Response) {
     await sendEmail(
       email,
       "Email Verification",
-      `<p>Please click the following link to verify your email: <a href="${verificationLink}">${verificationLink}</a></p>`
+      `<p>Please click the following link to verify your email: <a href="${verificationLink}">Verify Email</a></p>`
     );
 
     res.status(201).json({
