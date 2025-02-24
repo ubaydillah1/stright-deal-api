@@ -345,6 +345,13 @@ export async function login(req: Request, res: Response) {
       return;
     }
 
+    if (existingUser.role === "Admin") {
+      res.json({
+        message: "Admin login successfully",
+      });
+      return;
+    }
+
     if (existingUser.isEmailVerified) {
       res.status(403).json({ message: "Email user is not verified" });
       return;
