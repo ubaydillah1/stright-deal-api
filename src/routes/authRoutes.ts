@@ -53,10 +53,10 @@ router.get("/get-token-cookies", AuthController.getTokenCookies);
 
 // Get OTP
 router.post(
-  "/get-phone-otp",
+  "/send-phone-otp",
   authorize([Role.Visitor, Role.User]),
   validateRequest(["phoneNumber"]),
-  AuthController.getPhoneOTP
+  AuthController.sendPhoneOTP
 );
 
 router.post(

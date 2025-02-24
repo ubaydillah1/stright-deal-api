@@ -53,7 +53,7 @@ const registerSchema = z.object({
   password: passwordSchema,
 });
 
-export const getPhoneOTP = async (req: Request, res: Response) => {
+export const sendPhoneOTP = async (req: Request, res: Response) => {
   try {
     const { phoneNumber } = req.body;
     const email = (req as any).user.email;
