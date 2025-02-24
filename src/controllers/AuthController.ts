@@ -16,7 +16,6 @@ import { sendEmail } from "../utils/emailServiceSand";
 import getAccessTokenFromRefreshToken from "../utils/getAccessTokenFromRefreshToken";
 import { z } from "zod";
 import { isValidPhoneNumber } from "libphonenumber-js";
-import { TokenExpiredError } from "jsonwebtoken";
 
 const serverUrl = process.env.SERVER_URL;
 const clientUrl = process.env.CLIENT_URL;
@@ -354,6 +353,11 @@ export async function login(req: Request, res: Response) {
       const refreshToken = generateRefreshToken({
         id: existingUser.id,
         email: existingUser.email,
+      });
+
+      await prisma.user.update({
+        where: { id: existingUser.id },
+        data: { refreshToken },
       });
 
       res.json({

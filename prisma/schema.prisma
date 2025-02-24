@@ -107,6 +107,10 @@ enum TiresType {
   WinterTires
 }
 
+enum ActionType {
+  ReviewedSubmission
+}
+
 model User {
   id                           String    @id @default(uuid())
   email                        String    @unique
@@ -169,6 +173,7 @@ model Car {
   overallConditionStatus   ConditionStatus
   plannedSaleTimeline      PlannedSaleTimeline
   seen                     Boolean                  @default(false)
+  notes                    String?
   activityLogs             ActivityLog[]
   CarImages                CarImage[]
   createdAt                DateTime                 @default(now())
@@ -187,12 +192,13 @@ model CarImage {
 }
 
 model ActivityLog {
-  id        String   @id @default(uuid())
-  Car       Car      @relation(fields: [carId], references: [id])
-  carId     String
-  notes     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String     @id @default(uuid())
+  Car        Car        @relation(fields: [carId], references: [id])
+  carId      String
+  notes      String?
+  actionType ActionType
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
 
   @@map("activity_logs")
 }

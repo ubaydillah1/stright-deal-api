@@ -41,7 +41,7 @@ export async function getCarsByWeekHandler(req: Request, res: Response) {
 
 export async function changeStatus(req: Request, res: Response) {
   try {
-    const { statusReview, carId } = req.body;
+    const { statusReview, carId, notes } = req.body;
 
     const validStatuses = [
       "NeedToReview",
@@ -50,6 +50,7 @@ export async function changeStatus(req: Request, res: Response) {
       "Published",
       "Rejected",
     ];
+
     if (!statusReview || !validStatuses.includes(statusReview)) {
       res.status(400).json({
         message:
@@ -60,10 +61,17 @@ export async function changeStatus(req: Request, res: Response) {
 
     const updatedCar = await prisma.car.update({
       where: { id: carId },
-      data: { statusReview },
+      data: { statusReview, notes },
     });
 
-    console.log(updatedCar);
+    const activity = await prisma.activityLog.create({
+      data: {
+        carId,
+        actionType: "ReviewedSubmission",
+      },
+    });
+
+    console.log(activity);
 
     res.json({
       message: "Status updated successfully",
