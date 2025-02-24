@@ -279,9 +279,21 @@ export async function register(req: Request, res: Response) {
     const existingUser = await prisma.user.findUnique({ where: { email } });
 
     if (existingUser) {
-      const message = existingUser.isEmailVerified
-        ? "Email is already in use"
-        : "Email is already registered but not verified";
+      let message: string;
+
+      if (!existingUser.isEmailVerified) {
+        message = "Email is already registered but not verified";
+        res.status(400).json({ message });
+        return;
+      }
+
+      if (!existingUser.isPhoneVerified) {
+        message = "Phone number is not verified";
+        res.status(400).json({ message });
+        return;
+      }
+
+      message = "Email already in use";
       res.status(400).json({ message });
       return;
     }
@@ -313,7 +325,10 @@ export async function register(req: Request, res: Response) {
         "Registration successful. Please check your email for the verification link.",
     });
   } catch (error) {
-    res.status(500).json({ message: "Internal server error." });
+    res.status(500).json({
+      message: "Internal server error.",
+      error: (error as Error).message,
+    });
   }
 }
 
@@ -335,8 +350,18 @@ export async function login(req: Request, res: Response) {
       return;
     }
 
+    if (!existingUser.isPhoneVerified) {
+      res.status(403).json({ message: "Phone number is not verified" });
+      return;
+    }
+
     if (existingUser.password === null) {
-      res.status(400).json({ message: "Password not set for this user" });
+      res
+        .status(400)
+        .json({
+          message:
+            "This account was registered using social login. Please log in with your social account.",
+        });
       return;
     }
 
@@ -564,8 +589,6 @@ export async function forgotPassword(req: Request, res: Response) {
 export async function getResetPasswordPage(req: Request, res: Response) {
   try {
     const { token } = req.query;
-
-    console.log(token);
 
     if (!TokenExpiredError) {
       res.status(400).json({ message: "Invalid token" });
