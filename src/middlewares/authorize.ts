@@ -24,8 +24,6 @@ export function authorize(allowedRoles: Role[]) {
         return;
       }
 
-      console.log(ACCESS_TOKEN_SECRET);
-
       const decoded = jwt.verify(token, ACCESS_TOKEN_SECRET) as {
         id: string;
         email: string;
@@ -33,14 +31,11 @@ export function authorize(allowedRoles: Role[]) {
 
       req.user = decoded;
 
-      console.log(decoded);
-
       const user = await prisma.user.findUnique({
         where: { id: decoded.id },
         select: { role: true },
       });
 
-      console.log("Masuk authorize");
       if (!user) {
         res.status(404).json({ message: "User not found" });
         return;
