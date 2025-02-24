@@ -89,7 +89,6 @@ export async function createCarForm(req: Request, res: Response) {
 
   const userId = (req as any).user.id;
 
-  // Convert string to array if necessary
   if (typeof exteriorCondition === "string") {
     exteriorCondition = exteriorCondition.split(",");
   }
@@ -97,7 +96,6 @@ export async function createCarForm(req: Request, res: Response) {
     interiorDamage = interiorDamage.split(",");
   }
 
-  // Validate required fields
   const requiredFields = [
     "miliage",
     "transmissionType",
@@ -346,14 +344,22 @@ export async function uploadImages(req: Request, res: Response) {
   }
 
   try {
-    // Pastikan files adalah array
+    const existingImages = await prisma.carImage.count({
+      where: { carId },
+    });
+
     const fileArray = Array.isArray(files) ? files : [files];
 
-    // Upload setiap file ke Supabase
+    if (existingImages + fileArray.length > 5) {
+      res.status(400).json({
+        message: "Maximum of 5 images allowed per car",
+      });
+      return;
+    }
+
     const uploadPromises = fileArray.map(async (file) => {
       const fileName = `${carId}_${Date.now()}_${file.name}`;
 
-      // Upload file ke Supabase Storage
       const { data, error } = await supabase.storage
         .from("car-images")
         .upload(fileName, file.data, {
@@ -364,12 +370,10 @@ export async function uploadImages(req: Request, res: Response) {
         throw new Error(`Upload failed: ${error.message}`);
       }
 
-      // Dapatkan URL publik file yang diunggah
       const {
         data: { publicUrl },
       } = supabase.storage.from("car-images").getPublicUrl(fileName);
 
-      // Simpan URL gambar ke database menggunakan Prisma
       await prisma.carImage.create({
         data: {
           carId,
@@ -380,10 +384,8 @@ export async function uploadImages(req: Request, res: Response) {
       return publicUrl;
     });
 
-    // Tunggu semua file selesai diunggah
     const uploadedUrls = await Promise.all(uploadPromises);
 
-    // Kirim respons sukses
     res.status(201).json({
       message: "Images uploaded successfully",
       carId,
