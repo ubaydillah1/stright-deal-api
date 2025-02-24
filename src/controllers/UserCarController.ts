@@ -396,3 +396,59 @@ export async function uploadImages(req: Request, res: Response) {
       .json({ message: "Error uploading images", error: e.message });
   }
 }
+
+export async function updateVIN(req: Request, res: Response) {
+  try {
+    const { carId, vin } = req.body;
+
+    const existingCar = await prisma.car.findUnique({
+      where: { id: carId },
+    });
+
+    if (!existingCar) {
+      res.status(404).json({
+        message: "Car not found",
+      });
+      return;
+    }
+
+    const updatedCar = await prisma.car.update({
+      where: { id: carId },
+      data: { vin },
+    });
+
+    res.json(updatedCar);
+  } catch (error) {
+    const e = error as Error;
+    res.status(500).json({ message: "Error updating VIN", error: e.message });
+  }
+}
+
+export async function getUserCar(req: Request, res: Response) {
+  try {
+    const userId = (req as any).user.id;
+    const { carId } = req.body;
+
+    const car = await prisma.car.findFirst({
+      where: {
+        id: carId,
+        userId: userId,
+      },
+      include: {
+        user: true,
+      },
+    });
+
+    if (!car) {
+      res
+        .status(403)
+        .json({ message: "You are not allowed to access this car" });
+      return;
+    }
+
+    res.json(car);
+  } catch (error) {
+    const e = error as Error;
+    res.status(500).json({ message: "Error retrieving car", error: e.message });
+  }
+}
