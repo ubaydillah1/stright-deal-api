@@ -158,7 +158,7 @@ model Car {
   isTradeIn                Boolean
   plannedSaleTime          PlannedSaleTime
   additionalFeatures       AdditionalFeatures[]
-  anyAdditionalFeatures    String
+  anyAdditionalFeatures    String                   @default("")
   exteriorCondition        ExteriorCondition[]
   interiorDamage           InteriorDamage[]
   additionalDisclosures    AdditionalDisclosures    @default(NoNothingElseToDisclose)

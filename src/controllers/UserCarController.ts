@@ -140,7 +140,16 @@ export async function createCarForm(req: Request, res: Response) {
     if (!purchaseOptionAmount) missingFields.push("purchaseOptionAmount");
   }
 
-  // Return only the missing fields
+  requiredFields.forEach((field) => {
+    if (
+      req.body[field] === undefined ||
+      req.body[field] === null ||
+      (typeof req.body[field] === "string" && req.body[field].trim() === "")
+    ) {
+      missingFields.push(field);
+    }
+  });
+
   if (missingFields.length > 0) {
     res.status(400).json({
       message: "Missing required fields",

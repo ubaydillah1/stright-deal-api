@@ -681,10 +681,12 @@ export async function refreshTokenHandler(req: Request, res: Response) {
   try {
     const { refreshToken } = req.body;
 
+    console.log(refreshToken);
+
     const result = await getAccessTokenFromRefreshToken(refreshToken);
 
     if (!result) {
-      res.status(403).json({ message: "Invalid or expired refresh k" });
+      res.status(403).json({ message: "Invalid or expired refresh token" });
       return;
     }
 
