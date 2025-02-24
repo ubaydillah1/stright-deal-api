@@ -41,8 +41,7 @@ export async function getCarsByWeekHandler(req: Request, res: Response) {
 
 export async function changeStatus(req: Request, res: Response) {
   try {
-    const { id } = req.params;
-    const { statusReview } = req.body;
+    const { statusReview, carId } = req.body;
 
     const validStatuses = [
       "NeedToReview",
@@ -60,7 +59,7 @@ export async function changeStatus(req: Request, res: Response) {
     }
 
     const updatedCar = await prisma.car.update({
-      where: { id },
+      where: { id: carId },
       data: { statusReview },
     });
 
