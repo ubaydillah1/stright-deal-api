@@ -427,15 +427,16 @@ export async function updateVIN(req: Request, res: Response) {
 export async function getUserCar(req: Request, res: Response) {
   try {
     const userId = (req as any).user.id;
-    const { carId } = req.body;
+    const { carId } = req.query;
+    if (!carId || typeof carId !== "string") {
+      res.status(400).json({ message: "Car ID is required" });
+      return;
+    }
 
-    const car = await prisma.car.findFirst({
+    const car = await prisma.car.findUnique({
       where: {
         id: carId,
         userId: userId,
-      },
-      include: {
-        user: true,
       },
     });
 
@@ -448,7 +449,9 @@ export async function getUserCar(req: Request, res: Response) {
 
     res.json(car);
   } catch (error) {
-    const e = error as Error;
-    res.status(500).json({ message: "Error retrieving car", error: e.message });
+    res.status(500).json({
+      message: "Error retrieving car",
+      error: (error as Error).message,
+    });
   }
 }

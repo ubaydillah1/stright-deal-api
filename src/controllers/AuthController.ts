@@ -193,7 +193,7 @@ export async function verifyEmail(req: Request, res: Response) {
       email: user.email,
     });
 
-    const existingUser = await prisma.user.update({
+    await prisma.user.update({
       where: { id: user.id },
       data: {
         isEmailVerified: true,
@@ -607,23 +607,29 @@ export async function getResetPasswordPage(req: Request, res: Response) {
   try {
     const { token } = req.query;
 
-    if (!TokenExpiredError) {
-      res.status(400).json({ message: "Invalid token" });
-      return;
+    if (!token || typeof token !== "string") {
+      return res.redirect(
+        `${clientUrl}/failed?status=reset&error=missing_token`
+      );
     }
 
     const user = await prisma.user.findFirst({
-      where: { resetToken: token as string },
+      where: { resetToken: token },
     });
 
     if (!user || !user.resetTokenExpiry || new Date() > user.resetTokenExpiry) {
-      res.status(400).json({ message: "Invalid or expired token." });
-      return;
+      return res.redirect(
+        `${clientUrl}/failed?status=reset&error=invalid_or_expired_token`
+      );
     }
 
-    res.json({ message: "Token is valid. Proceed to reset password." });
-  } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
+    return res.redirect(`${clientUrl}/success?status=reset&token=${token}`);
+  } catch (error: any) {
+    return res.redirect(
+      `${clientUrl}/failed?status=reset&error=${encodeURIComponent(
+        error.message
+      )}`
+    );
   }
 }
 
