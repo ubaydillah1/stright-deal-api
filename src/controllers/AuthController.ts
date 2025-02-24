@@ -346,8 +346,20 @@ export async function login(req: Request, res: Response) {
     }
 
     if (existingUser.role === "Admin") {
+      const accessToken = generateAccessToken({
+        id: existingUser.id,
+        email: existingUser.email,
+      });
+
+      const refreshToken = generateRefreshToken({
+        id: existingUser.id,
+        email: existingUser.email,
+      });
+
       res.json({
         message: "Admin login successfully",
+        refreshToken,
+        accessToken,
       });
       return;
     }
