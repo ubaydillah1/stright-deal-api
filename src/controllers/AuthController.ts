@@ -155,6 +155,7 @@ export const verifyPhoneOTP = async (req: Request, res: Response) => {
         expiredPhoneOtpToken: null,
         isPhoneVerified: true,
         role: "User",
+        refreshToken,
       },
     });
 
