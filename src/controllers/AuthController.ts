@@ -416,15 +416,19 @@ export async function login(req: Request, res: Response) {
 }
 
 export async function logout(req: Request, res: Response) {
-  if (!req.cookies.refreshToken) {
-    res.status(401).json({
-      message: "No refresh k found, please log in first.",
-    });
+  const { id } = (req as any).user.id;
+
+  const deleteUser = await prisma.user.update({
+    where: { id },
+    data: { refreshToken: null },
+  });
+
+  if (!deleteUser) {
+    res.status(404).json({ message: "User not found" });
     return;
   }
 
   res.clearCookie("refreshToken");
-
   res.json({ message: "Logout successful" });
 }
 
