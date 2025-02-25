@@ -15,6 +15,9 @@ export const getCarsByWeekQuery = async () => {
         lte: endOfWeek,
       },
     },
+    include: {
+      User: true,
+    },
     orderBy: { createdAt: "desc" },
   });
 };
@@ -29,5 +32,8 @@ export const getCarsByMonthQuery = async () => {
       },
     },
     orderBy: { createdAt: "desc" },
+    include: {
+      User: true,
+    },
   });
 };

@@ -13,6 +13,9 @@ export async function getAllCars(req: Request, res: Response) {
   try {
     const cars = await prisma.car.findMany({
       orderBy: { createdAt: "desc" },
+      include: {
+        User: true,
+      },
     });
 
     const unseenCount = await prisma.car.count({

@@ -293,7 +293,7 @@ export async function createCarForm(req: Request, res: Response) {
 
     const newCar = await prisma.car.create({
       data: {
-        user: {
+        User: {
           connect: { id: userId },
         },
         miliage: validMileage,
@@ -345,11 +345,6 @@ export async function uploadImages(req: Request, res: Response) {
 
   if (!carId) {
     res.status(400).json({ message: "Car ID is required" });
-    return;
-  }
-
-  if (!files || (Array.isArray(files) && files.length === 0)) {
-    res.status(400).json({ message: "No images provided" });
     return;
   }
 
