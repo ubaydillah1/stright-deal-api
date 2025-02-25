@@ -282,18 +282,18 @@ export async function register(req: Request, res: Response) {
 
       if (!existingUser.isEmailVerified) {
         message = "Email is already registered but not verified";
-        res.status(400).json({ message });
+        res.status(400).json({ message, code: "EMAIL_NOT_VERIFIED" });
         return;
       }
 
       if (!existingUser.isPhoneVerified) {
         message = "Phone number is not verified";
-        res.status(400).json({ message });
+        res.status(400).json({ message, code: "PHONE_NOT_VERIFIED" });
         return;
       }
 
       message = "Email already in use";
-      res.status(400).json({ message });
+      res.status(400).json({ message, code: "EMAIL_IN_USE" });
       return;
     }
 
