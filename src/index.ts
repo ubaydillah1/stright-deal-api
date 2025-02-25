@@ -1,6 +1,6 @@
 import express, { Request, Response } from "express";
 import "dotenv/config";
-import dashboardRouter from "./routes/dashboardRoutes";
+import adminDashboardRouter from "./routes/adminDashboardRoutes";
 import authRouter from "./routes/authRoutes";
 import cors from "cors";
 import prisma from "./config/prismaClient";
@@ -38,7 +38,7 @@ app.use(
 );
 
 app.use("/api/auth", authRouter);
-app.use("/api/dashboard", authorize([Role.Admin]), dashboardRouter);
+app.use("/api/admin/dashboard", authorize([Role.Admin]), adminDashboardRouter);
 app.use("/api/user", authorize([Role.User]), userCarRouter);
 
 app.get("/delete-users", async (req, res) => {

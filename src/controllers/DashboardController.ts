@@ -11,10 +11,23 @@ import {
 
 export async function getAllCars(req: Request, res: Response) {
   try {
-    const cars = await prisma.car.findMany();
+    const cars = await prisma.car.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+
+    const unseenCount = await prisma.car.count({
+      where: { seen: false },
+    });
+
+    await prisma.car.updateMany({
+      where: { seen: false },
+      data: { seen: true },
+    });
+
     res.json({
       message: "success",
       data: cars,
+      unseenCount,
     });
   } catch (error) {
     res.status(500).json({ message: "Error fetching cars", error });
@@ -41,7 +54,7 @@ export async function getCarsByWeekHandler(req: Request, res: Response) {
 
 export async function changeStatus(req: Request, res: Response) {
   try {
-    const { statusReview, carId, notes } = req.body;
+    const { statusReview, carId } = req.body;
 
     const validStatuses = [
       "NeedToReview",
@@ -61,17 +74,15 @@ export async function changeStatus(req: Request, res: Response) {
 
     const updatedCar = await prisma.car.update({
       where: { id: carId },
-      data: { statusReview, notes },
+      data: { statusReview },
     });
 
-    const activity = await prisma.activityLog.create({
+    await prisma.activityLog.create({
       data: {
         carId,
         actionType: "ReviewedSubmission",
       },
     });
-
-    console.log(activity);
 
     res.json({
       message: "Status updated successfully",
@@ -82,9 +93,29 @@ export async function changeStatus(req: Request, res: Response) {
   }
 }
 
+export async function addNotes(req: Request, res: Response) {
+  try {
+    const { notes, carId } = req.body;
+
+    const updatedCar = await prisma.car.update({
+      where: { id: carId },
+      data: { notes },
+    });
+
+    res.json({
+      message: "Notes added successfully",
+      data: updatedCar,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error adding notes", error });
+  }
+}
+
 export async function getAllActivityLogs(req: Request, res: Response) {
   try {
-    const activity = await prisma.activityLog.findMany();
+    const activity = await prisma.activityLog.findMany({
+      orderBy: { createdAt: "desc" },
+    });
     res.json({
       message: "success",
       data: activity,

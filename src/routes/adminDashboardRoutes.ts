@@ -16,6 +16,12 @@ router.patch(
   DashboardController.changeStatus
 );
 
+router.patch(
+  "/cars/notes",
+  validateRequest(["notes", "carId"]),
+  DashboardController.addNotes
+);
+
 // Log Feature
 router.get("/activity-logs", DashboardController.getAllActivityLogs);
 router.get(
