@@ -181,34 +181,17 @@ export async function verifyEmail(req: Request, res: Response) {
       return;
     }
 
-    const accessToken = generateAccessToken({
-      id: user.id,
-      email: user.email,
-    });
-
-    const refreshToken = generateRefreshToken({
-      id: user.id,
-      email: user.email,
-    });
-
     await prisma.user.update({
       where: { id: user.id },
       data: {
         isEmailVerified: true,
         emailVerificationToken: null,
         emailVerificationTokenExpiry: null,
-        refreshToken,
       },
     });
 
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      sameSite: "none",
-      secure: true,
-    });
-
     res.redirect(
-      `${clientUrl}/success?status=verify_email&access_token=${accessToken}`
+      `${clientUrl}/success?status=verify_email?email=${user.email}`
     );
   } catch (error: unknown) {
     const e = error as Error;
