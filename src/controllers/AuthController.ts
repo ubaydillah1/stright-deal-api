@@ -138,6 +138,16 @@ export const verifyPhoneOTP = async (req: Request, res: Response) => {
       return;
     }
 
+    const accessToken = generateAccessToken({
+      id: user.id,
+      email: user.email,
+    });
+
+    const refreshToken = generateRefreshToken({
+      id: user.id,
+      email: user.email,
+    });
+
     await prisma.user.update({
       where: { phoneNumber },
       data: {
@@ -148,7 +158,11 @@ export const verifyPhoneOTP = async (req: Request, res: Response) => {
       },
     });
 
-    res.json({ message: "Phone number verified successfully" });
+    res.json({
+      message: "Phone number verified successfully",
+      accessToken,
+      refreshToken,
+    });
   } catch (err) {
     const error = err as Error;
     res
@@ -269,21 +283,7 @@ export async function register(req: Request, res: Response) {
     const existingUser = await prisma.user.findUnique({ where: { email } });
 
     if (existingUser) {
-      let message: string;
-
-      if (!existingUser.isEmailVerified) {
-        message = "Email is already registered but not verified";
-        res.status(400).json({ message, code: "EMAIL_NOT_VERIFIED" });
-        return;
-      }
-
-      if (!existingUser.isPhoneVerified) {
-        message = "Phone number is not verified";
-        res.status(400).json({ message, code: "PHONE_NOT_VERIFIED" });
-        return;
-      }
-
-      message = "Email already in use";
+      let message = "Email already in use";
       res.status(400).json({ message, code: "EMAIL_IN_USE" });
       return;
     }
