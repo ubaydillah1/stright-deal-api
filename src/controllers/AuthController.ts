@@ -191,7 +191,7 @@ export async function verifyEmail(req: Request, res: Response) {
     });
 
     res.redirect(
-      `${clientUrl}/success?status=verify_email?email=${user.email}`
+      `${clientUrl}/success?status=verify_email&email=${user.email}`
     );
   } catch (error: unknown) {
     const e = error as Error;
