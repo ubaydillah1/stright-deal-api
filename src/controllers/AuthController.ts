@@ -55,8 +55,7 @@ const registerSchema = z.object({
 
 export const sendPhoneOTP = async (req: Request, res: Response) => {
   try {
-    const { phoneNumber } = req.body;
-    const email = (req as any).user.email;
+    const { phoneNumber, email } = req.body;
 
     if (!email || !phoneNumber) {
       res.status(400).json({ message: "Email and phone number are required" });
@@ -377,12 +376,10 @@ export async function login(req: Request, res: Response) {
     }
 
     if (!existingUser.isPhoneVerified) {
-      res
-        .status(403)
-        .json({
-          message: "Phone number is not verified",
-          code: "PHONE_NOT_VERIFIED",
-        });
+      res.status(403).json({
+        message: "Phone number is not verified",
+        code: "PHONE_NOT_VERIFIED",
+      });
       return;
     }
 
