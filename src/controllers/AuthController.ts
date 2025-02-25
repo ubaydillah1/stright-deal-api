@@ -369,12 +369,20 @@ export async function login(req: Request, res: Response) {
     }
 
     if (!existingUser.isEmailVerified) {
-      res.status(403).json({ message: "Email user is not verified" });
+      res.status(403).json({
+        message: "Email user is not verified",
+        code: "EMAIL_NOT_VERIFIED",
+      });
       return;
     }
 
     if (!existingUser.isPhoneVerified) {
-      res.status(403).json({ message: "Phone number is not verified" });
+      res
+        .status(403)
+        .json({
+          message: "Phone number is not verified",
+          code: "PHONE_NOT_VERIFIED",
+        });
       return;
     }
 
