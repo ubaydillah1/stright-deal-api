@@ -80,6 +80,15 @@ export const sendPhoneOTP = async (req: Request, res: Response) => {
       return;
     }
 
+    const existingUserWithPhone = await prisma.user.findFirst({
+      where: { phoneNumber },
+    });
+
+    if (existingUserWithPhone && existingUserWithPhone.email !== email) {
+      res.status(400).json({ message: "Phone number is already in use" });
+      return;
+    }
+
     const otp = generateOtp();
     const expiredAt = getOtpExpiration();
 
