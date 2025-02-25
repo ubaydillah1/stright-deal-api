@@ -16,7 +16,7 @@ router.get("/approvalStats", DashboardController.getApprovalStats);
 
 // Update Status
 router.patch(
-  "/cars/status",
+  "/car/status",
   validateRequest(["statusReview", "carId"]),
   DashboardController.changeStatus
 );
