@@ -1,13 +1,18 @@
 import express from "express";
-import * as DashboardController from "../controllers/DashboardController";
+import * as DashboardController from "../controllers/AdminDashboardController";
 import { validateRequest } from "../middlewares/validateRequest";
 
 const router = express.Router();
 
 // Car Feature
 router.get("/cars", DashboardController.getAllCars);
+router.get("/car/:id", DashboardController.getCar);
 router.get("/cars/this-week", DashboardController.getCarsByWeekHandler);
 router.get("/cars/this-month", DashboardController.getCarsByMonthHandler);
+
+//  Grafik
+router.get("/submissions", DashboardController.getSubmissions);
+router.get("/approvalStats", DashboardController.getApprovalStats);
 
 // Update Status
 router.patch(

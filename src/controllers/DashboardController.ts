@@ -1,150 +1,65 @@
+import { PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
-import {
-  getCarsByMonthQuery,
-  getCarsByWeekQuery,
-} from "../utils/filterCarByTimeline";
-import prisma from "../config/prismaClient";
-import {
-  getActivityLogsByMonthQuery,
-  getActivityLogsByWeekQuery,
-} from "../utils/filterActivityLogsByQuery";
+import bcrypt from "bcrypt";
+import { z } from "zod";
+const prisma = new PrismaClient();
 
-export async function getAllCars(req: Request, res: Response) {
-  try {
-    const cars = await prisma.car.findMany({
-      orderBy: { createdAt: "desc" },
-    });
-
-    const unseenCount = await prisma.car.count({
-      where: { seen: false },
-    });
-
-    await prisma.car.updateMany({
-      where: { seen: false },
-      data: { seen: true },
-    });
-
-    res.json({
-      message: "success",
-      data: cars,
-      unseenCount,
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Error fetching cars", error });
-  }
+interface AuthRequest extends Request {
+  user?: { id: string; email: string };
 }
 
-export async function getCarsByMonthHandler(req: Request, res: Response) {
+export const changeName = async (req: AuthRequest, res: Response) => {
   try {
-    const cars = await getCarsByMonthQuery();
-    res.json({ message: "success", data: cars });
+    const { firstName, lastName } = req.body;
+    const { id } = req.user || {};
+
+    await prisma.user.update({
+      where: { id },
+      data: {
+        firstName,
+        lastName,
+      },
+    });
+
+    res.json({ message: "Name changed successfully" });
   } catch (error) {
-    res.status(500).json({ message: "Error fetching cars", error });
+    res.status(500).json({
+      message: (error as Error).message,
+    });
   }
-}
+};
 
-export async function getCarsByWeekHandler(req: Request, res: Response) {
+const passwordSchema = z
+  .string()
+  .min(8, "Password must be at least 8 characters")
+  .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+  .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+  .regex(/\d/, "Password must contain at least one number")
+  .regex(/[@$!%*?&]/, "Password must contain at least one special character");
+
+export const changePassword = async (req: AuthRequest, res: Response) => {
   try {
-    const cars = await getCarsByWeekQuery();
-    res.json({ message: "success", data: cars });
-  } catch (error) {
-    res.status(500).json({ message: "Error fetching cars", error });
-  }
-}
+    const { newPassword } = req.body;
+    const { id } = req.user || {};
 
-export async function changeStatus(req: Request, res: Response) {
-  try {
-    const { statusReview, carId } = req.body;
-
-    const validStatuses = [
-      "NeedToReview",
-      "InReview",
-      "Reviewed",
-      "Published",
-      "Rejected",
-    ];
-
-    if (!statusReview || !validStatuses.includes(statusReview)) {
+    const result = passwordSchema.safeParse(newPassword);
+    if (!result.success) {
       res.status(400).json({
-        message:
-          "Invalid statusReview. Allowed values: " + validStatuses.join(", "),
+        message: "Invalid password",
+        errors: result.error.format(),
       });
       return;
     }
 
-    const updatedCar = await prisma.car.update({
-      where: { id: carId },
-      data: { statusReview },
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await prisma.user.update({
+      where: { id },
+      data: { password: hashedPassword },
     });
 
-    await prisma.activityLog.create({
-      data: {
-        carId,
-        actionType: "ReviewedSubmission",
-      },
-    });
-
-    res.json({
-      message: "Status updated successfully",
-      data: updatedCar,
-    });
+    res.json({ message: "Password changed successfully" });
   } catch (error) {
-    res.status(500).json({ message: "Error updating statusReview", error });
+    res.status(500).json({ message: (error as Error).message });
   }
-}
-
-export async function addNotes(req: Request, res: Response) {
-  try {
-    const { notes, carId } = req.body;
-
-    const updatedCar = await prisma.car.update({
-      where: { id: carId },
-      data: { notes },
-    });
-
-    res.json({
-      message: "Notes added successfully",
-      data: updatedCar,
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Error adding notes", error });
-  }
-}
-
-export async function getAllActivityLogs(req: Request, res: Response) {
-  try {
-    const activity = await prisma.activityLog.findMany({
-      orderBy: { createdAt: "desc" },
-    });
-    res.json({
-      message: "success",
-      data: activity,
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Error fetching cars", error });
-  }
-}
-
-export async function getActivityLogsByWeekHandler(
-  req: Request,
-  res: Response
-) {
-  try {
-    const activityLogs = await getActivityLogsByWeekQuery();
-    res.json({ message: "success", data: activityLogs });
-  } catch (error) {
-    res.status(500).json({ message: "Error fetching activity logs", error });
-  }
-}
-
-export async function getActivityLogsByMonthHandler(
-  req: Request,
-  res: Response
-) {
-  try {
-    const activityLogs = await getActivityLogsByMonthQuery();
-    res.json({ message: "success", data: activityLogs });
-  } catch (error) {
-    res.status(500).json({ message: "Error fetching activity logs", error });
-  }
-}
+};

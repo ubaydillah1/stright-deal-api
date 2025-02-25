@@ -9,6 +9,7 @@ import {
   TireReplacementTimeframe,
   TransmissionType,
   TiresType,
+  ActionType,
 } from "@prisma/client";
 import prisma from "../config/prismaClient";
 import { Response, Request } from "express";
@@ -458,7 +459,7 @@ export async function getUserCar(req: Request, res: Response) {
       return;
     }
 
-    res.json(car);
+    res.json({ car, message: "success get user car" });
   } catch (error) {
     res.status(500).json({
       message: "Error retrieving car",

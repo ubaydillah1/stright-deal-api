@@ -6,8 +6,7 @@ import { Role } from "@prisma/client";
 
 const router = express.Router();
 
-router.get("/car", authorize([Role.User]), UserCarController.getUserCar);
-
+router.get("/car", UserCarController.getUserCar);
 router.post("/car", UserCarController.createCarForm);
 
 router.post(

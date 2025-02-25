@@ -38,7 +38,8 @@ app.use(
 );
 
 app.use("/api/auth", authRouter);
-app.use("/api/admin/dashboard", authorize([Role.Admin]), adminDashboardRouter);
+app.use("/api/dashboard", authorize([Role.User, Role.Admin]));
+app.use("/api/admin/dashboard", adminDashboardRouter);
 app.use("/api/user", authorize([Role.User]), userCarRouter);
 
 app.get("/delete-users", async (req, res) => {
@@ -47,6 +48,34 @@ app.get("/delete-users", async (req, res) => {
     await prisma.user.deleteMany();
     res.json({
       message: "User has been deleted",
+    });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+});
+
+app.get("/delete-cars", async (req, res) => {
+  try {
+    await prisma.car.deleteMany();
+    res.json({
+      message: "All cars has been deleted",
+    });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+});
+
+app.get("/delete-car-images", async (req, res) => {
+  try {
+    await prisma.carImage.deleteMany();
+    res.json({
+      message: "All features has been deleted",
     });
   } catch (err) {
     const error = err as Error;
