@@ -12,8 +12,14 @@ router.get("/cars/this-month", AdminDashboardController.getCarsByMonthHandler);
 router.get("/cars", AdminDashboardController.searchCars);
 
 //  Grafik
-router.get("/submissions", AdminDashboardController.getSubmissions);
-router.get("/approvalStats", AdminDashboardController.getApprovalStats);
+router.get(
+  "/grafik-submissions",
+  AdminDashboardController.getGrafikSubmissions
+);
+router.get(
+  "/grafik-approvalStats",
+  AdminDashboardController.getGrafikApprovalStats
+);
 
 // Update Status
 router.patch(
@@ -38,5 +44,9 @@ router.get(
   "/activity-logs/this-month",
   AdminDashboardController.getActivityLogsByMonthHandler
 );
+
+// Notifications
+router.get("/notifications", AdminDashboardController.getNotifications);
+router.get("/submissions", AdminDashboardController.getSubmissions);
 
 export default router;

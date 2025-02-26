@@ -197,7 +197,7 @@ export async function getActivityLogsByMonthHandler(
   }
 }
 
-export const getSubmissions = async (req: Request, res: Response) => {
+export const getGrafikSubmissions = async (req: Request, res: Response) => {
   try {
     const submissions = await prisma.car.findMany({
       select: {
@@ -225,7 +225,7 @@ export const getSubmissions = async (req: Request, res: Response) => {
   }
 };
 
-export const getApprovalStats = async (req: Request, res: Response) => {
+export const getGrafikApprovalStats = async (req: Request, res: Response) => {
   try {
     const totalVehicles = await prisma.car.count();
 
@@ -278,6 +278,35 @@ export const searchCars = async (req: Request, res: Response) => {
     });
 
     res.json(cars);
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const getNotifications = async (req: Request, res: Response) => {
+  try {
+    const notifications = await prisma.notification.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        ActivityLog: true,
+        Car: true,
+      },
+    });
+    res.json(notifications);
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const getSubmissions = async (req: Request, res: Response) => {
+  try {
+    const notifications = await prisma.notification.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        Car: true,
+      },
+    });
+    res.json(notifications);
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
   }

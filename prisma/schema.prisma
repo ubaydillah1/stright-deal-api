@@ -198,6 +198,8 @@ model Notification {
   carId         String?
   ActivityLog   ActivityLog? @relation(fields: [activityLogId], references: [id])
   activityLogId String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
   @@map("notifications")
 }

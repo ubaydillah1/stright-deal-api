@@ -11,6 +11,7 @@ import fileUpload from "express-fileupload";
 import limiter from "./utils/limiter";
 import { authorize } from "./middlewares/authorize";
 import { Role } from "@prisma/client";
+import profileRouter from "./routes/profileRoutes";
 
 const app = express();
 
@@ -39,7 +40,7 @@ app.use(
 );
 
 app.use("/api/auth", authRouter);
-app.use("/api/dashboard", authorize([Role.User, Role.Admin]));
+app.use("/api/profile", authorize([Role.User, Role.Admin]), profileRouter);
 app.use("/api/admin/dashboard", adminDashboardRouter);
 app.use("/api/user", authorize([Role.User]), userCarRouter);
 
