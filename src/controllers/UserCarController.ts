@@ -326,6 +326,12 @@ export async function createCarForm(req: Request, res: Response) {
       },
     });
 
+    await prisma.notification.create({
+      data: {
+        carId: newCar.id,
+      },
+    });
+
     res.status(201).json(newCar);
   } catch (error) {
     const e = error as Error;

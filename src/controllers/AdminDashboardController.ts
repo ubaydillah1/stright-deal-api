@@ -97,11 +97,17 @@ export async function changeStatus(req: Request, res: Response) {
       data: { statusReview },
     });
 
-    await prisma.activityLog.create({
+    const newActivityLog = await prisma.activityLog.create({
       data: {
         carId,
         actionType: "ReviewedSubmission",
         statusReviewLog: statusReview,
+      },
+    });
+
+    await prisma.notification.create({
+      data: {
+        activityLogId: newActivityLog.id,
       },
     });
 
