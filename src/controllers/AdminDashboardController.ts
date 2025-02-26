@@ -101,6 +101,7 @@ export async function changeStatus(req: Request, res: Response) {
       data: {
         carId,
         actionType: "ReviewedSubmission",
+        statusReviewLog: statusReview,
       },
     });
 
