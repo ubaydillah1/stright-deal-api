@@ -629,7 +629,9 @@ export async function getResetPasswordPage(req: Request, res: Response) {
       );
     }
 
-    return res.redirect(`${clientUrl}/success?status=reset&token=${token}`);
+    return res.redirect(
+      `${clientUrl}/success?status=reset&token=${token}&email=${user.email}`
+    );
   } catch (error: any) {
     return res.redirect(
       `${clientUrl}/failed?status=reset&error=${encodeURIComponent(
