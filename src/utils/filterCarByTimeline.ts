@@ -17,6 +17,7 @@ export const getCarsByWeekQuery = async () => {
     },
     include: {
       User: true,
+      CarImages: true,
     },
     orderBy: { createdAt: "desc" },
   });
@@ -34,6 +35,7 @@ export const getCarsByMonthQuery = async () => {
     orderBy: { createdAt: "desc" },
     include: {
       User: true,
+      CarImages: true,
     },
   });
 };

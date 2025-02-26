@@ -16,6 +16,7 @@ export async function getAllCars(req: Request, res: Response) {
       orderBy: { createdAt: "desc" },
       include: {
         User: true,
+        CarImages: true,
       },
     });
 
@@ -42,6 +43,10 @@ export async function getCar(req: Request, res: Response) {
   try {
     const cars = await prisma.car.findUnique({
       where: { id: req.params.id },
+      include: {
+        User: true,
+        CarImages: true,
+      },
     });
     res.json({ message: "success", data: cars });
   } catch (error) {
