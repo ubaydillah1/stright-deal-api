@@ -248,7 +248,7 @@ export const getApprovalStats = async (req: Request, res: Response) => {
   }
 };
 
-const searchCars = async (req: Request, res: Response) => {
+export const searchCars = async (req: Request, res: Response) => {
   const query = req.query.s as string;
 
   try {
@@ -256,11 +256,17 @@ const searchCars = async (req: Request, res: Response) => {
       where: {
         OR: [
           { vin: { contains: query, mode: "insensitive" } },
-          { User: { id: { contains: query, mode: "insensitive" } } },
+          { User: { firstName: { contains: query, mode: "insensitive" } } },
+          { User: { lastName: { contains: query, mode: "insensitive" } } },
         ],
       },
       include: {
-        User: true,
+        User: {
+          select: {
+            firstName: true,
+            lastName: true,
+          },
+        },
       },
     });
 

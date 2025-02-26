@@ -178,6 +178,7 @@ model Car {
   CarImages                CarImage[]
   createdAt                DateTime                 @default(now())
   updatedAt                DateTime                 @updatedAt
+  Notifications            Notification[]
 
   @@map("cars")
 }
@@ -191,14 +192,25 @@ model CarImage {
   @@map("car_images")
 }
 
+model Notification {
+  id            String       @id @default(uuid())
+  Car           Car?         @relation(fields: [carId], references: [id])
+  carId         String?
+  ActivityLog   ActivityLog? @relation(fields: [activityLogId], references: [id])
+  activityLogId String?
+
+  @@map("notifications")
+}
+
 model ActivityLog {
-  id         String     @id @default(uuid())
-  Car        Car        @relation(fields: [carId], references: [id])
-  carId      String
-  notes      String?
-  actionType ActionType
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
+  id            String         @id @default(uuid())
+  Car           Car            @relation(fields: [carId], references: [id])
+  carId         String
+  notes         String?
+  actionType    ActionType
+  Notifications Notification[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
   @@map("activity_logs")
 }

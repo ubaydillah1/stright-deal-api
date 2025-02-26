@@ -1,41 +1,42 @@
 import express from "express";
-import * as DashboardController from "../controllers/AdminDashboardController";
+import * as AdminDashboardController from "../controllers/AdminDashboardController";
 import { validateRequest } from "../middlewares/validateRequest";
 
 const router = express.Router();
 
 // Car Feature
-router.get("/cars", DashboardController.getAllCars);
-router.get("/car/:id", DashboardController.getCar);
-router.get("/cars/this-week", DashboardController.getCarsByWeekHandler);
-router.get("/cars/this-month", DashboardController.getCarsByMonthHandler);
+router.get("/cars", AdminDashboardController.getAllCars);
+router.get("/car/:id", AdminDashboardController.getCar);
+router.get("/cars/this-week", AdminDashboardController.getCarsByWeekHandler);
+router.get("/cars/this-month", AdminDashboardController.getCarsByMonthHandler);
+router.get("/cars", AdminDashboardController.searchCars);
 
 //  Grafik
-router.get("/submissions", DashboardController.getSubmissions);
-router.get("/approvalStats", DashboardController.getApprovalStats);
+router.get("/submissions", AdminDashboardController.getSubmissions);
+router.get("/approvalStats", AdminDashboardController.getApprovalStats);
 
 // Update Status
 router.patch(
   "/car/status",
   validateRequest(["statusReview", "carId"]),
-  DashboardController.changeStatus
+  AdminDashboardController.changeStatus
 );
 
 router.patch(
   "/cars/notes",
   validateRequest(["notes", "carId"]),
-  DashboardController.addNotes
+  AdminDashboardController.addNotes
 );
 
 // Log Feature
-router.get("/activity-logs", DashboardController.getAllActivityLogs);
+router.get("/activity-logs", AdminDashboardController.getAllActivityLogs);
 router.get(
   "/activity-logs/this-week",
-  DashboardController.getActivityLogsByWeekHandler
+  AdminDashboardController.getActivityLogsByWeekHandler
 );
 router.get(
   "/activity-logs/this-month",
-  DashboardController.getActivityLogsByMonthHandler
+  AdminDashboardController.getActivityLogsByMonthHandler
 );
 
 export default router;
