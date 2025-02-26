@@ -8,6 +8,7 @@ import {
   getActivityLogsByMonthQuery,
   getActivityLogsByWeekQuery,
 } from "../utils/filterActivityLogsByQuery";
+import { sendEmail } from "../utils/emailServiceSand";
 
 export async function getAllCars(req: Request, res: Response) {
   try {
@@ -114,7 +115,25 @@ export async function addNotes(req: Request, res: Response) {
     const updatedCar = await prisma.car.update({
       where: { id: carId },
       data: { notes },
+      include: {
+        User: true,
+      },
     });
+
+    await sendEmail(
+      updatedCar.User.email,
+      "Your Car Listing Has Been Rejected - Stright Deal",
+      `<p>Dear ${updatedCar.User.firstName} ${updatedCar.User.lastName},</p>
+      <p>We regret to inform you that your car listing with ID <strong>${carId}</strong> has been rejected.</p>
+      <p><strong>Reason for Rejection:</strong></p>
+      <blockquote style="background: #f8f8f8; padding: 10px; border-left: 3px solid red;">
+        ${notes}
+      </blockquote>
+      <p>Please review the provided information and make the necessary corrections before resubmitting.</p>
+      <p>Thank you for using <strong>Stright Deal</strong>.</p>
+      <p>Best regards,</p>
+      <p>The Stright Deal Team</p>`
+    );
 
     res.json({
       message: "Notes added successfully",
