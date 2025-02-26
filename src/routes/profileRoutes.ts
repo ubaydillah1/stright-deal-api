@@ -1,5 +1,5 @@
 import express from "express";
-import * as DashboardController from "../controllers/DashboardController";
+import * as DashboardController from "../controllers/ProfileController";
 
 const router = express.Router();
 
