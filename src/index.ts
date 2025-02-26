@@ -107,6 +107,12 @@ app.get("*", (req: Request, res: Response) => {
   });
 });
 
-app.listen(process.env.PORT, () => {
+const server = app.listen(process.env.PORT, () => {
   console.log(`http://${HOST}:${PORT}`);
+});
+
+process.on("SIGINT", async () => {
+  console.log("Shutting down gracefully...");
+  await prisma.$disconnect();
+  server.close(() => process.exit(0));
 });

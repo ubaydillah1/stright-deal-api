@@ -247,3 +247,25 @@ export const getApprovalStats = async (req: Request, res: Response) => {
     });
   }
 };
+
+const searchCars = async (req: Request, res: Response) => {
+  const query = req.query.s as string;
+
+  try {
+    const cars = await prisma.car.findMany({
+      where: {
+        OR: [
+          { vin: { contains: query, mode: "insensitive" } },
+          { User: { id: { contains: query, mode: "insensitive" } } },
+        ],
+      },
+      include: {
+        User: true,
+      },
+    });
+
+    res.json(cars);
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
