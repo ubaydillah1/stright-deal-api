@@ -41,7 +41,7 @@ app.use(
 
 app.use("/api/auth", authRouter);
 app.use("/api/profile", authorize([Role.User, Role.Admin]), profileRouter);
-app.use("/api/admin/dashboard", adminDashboardRouter);
+app.use("/api/admin/dashboard", authorize([Role.Admin]), adminDashboardRouter);
 app.use("/api/user", authorize([Role.User]), userCarRouter);
 
 app.get("/delete-users", async (req, res) => {

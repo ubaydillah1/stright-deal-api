@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import prisma from "../config/prismaClient";
 import { getUserGoogleData } from "../utils/googleAuthUtils";
-import { generateAccessToken, generateRefreshToken } from "../utils/tokenUtils";
 import { User } from "@prisma/client";
 import { OAuth2Client } from "google-auth-library";
 import "dotenv/config";
@@ -16,6 +15,7 @@ import { sendEmail } from "../utils/emailServiceSand";
 import getAccessTokenFromRefreshToken from "../utils/getAccessTokenFromRefreshToken";
 import { z } from "zod";
 import { isValidPhoneNumber } from "libphonenumber-js";
+import generateToken from "../utils/generateToken";
 
 const serverUrl = process.env.SERVER_URL;
 const clientUrl = process.env.CLIENT_URL;
@@ -32,11 +32,7 @@ interface UserGoogleProfile {
 
 const passwordSchema = z
   .string()
-  .min(8, "password must be at least 8 characters")
-  .regex(/[A-Z]/, "password must contain at least one uppercase letter")
-  .regex(/[a-z]/, "password must contain at least one lowercase letter")
-  .regex(/\d/, "password must contain at least one number")
-  .regex(/[@$!%*?&]/, "password must contain at least one special character");
+  .min(8, "password must be at least 8 characters");
 
 const registerSchema = z.object({
   firstName: z
@@ -138,16 +134,6 @@ export const verifyPhoneOTP = async (req: Request, res: Response) => {
       return;
     }
 
-    const accessToken = generateAccessToken({
-      id: user.id,
-      email: user.email,
-    });
-
-    const refreshToken = generateRefreshToken({
-      id: user.id,
-      email: user.email,
-    });
-
     await prisma.user.update({
       where: { phoneNumber },
       data: {
@@ -155,14 +141,11 @@ export const verifyPhoneOTP = async (req: Request, res: Response) => {
         expiredPhoneOtpToken: null,
         isPhoneVerified: true,
         role: "User",
-        refreshToken,
       },
     });
 
     res.json({
       message: "Phone number verified successfully",
-      accessToken,
-      refreshToken,
     });
   } catch (err) {
     const error = err as Error;
@@ -293,7 +276,7 @@ export async function register(req: Request, res: Response) {
     const emailVerificationToken = v4();
     const emailVerificationTokenExpiry = new Date(Date.now() + 1000 * 60 * 30);
 
-    await prisma.user.create({
+    const user = await prisma.user.create({
       data: {
         email,
         firstName,
@@ -311,9 +294,13 @@ export async function register(req: Request, res: Response) {
       `<p>Please click the following link to verify your email: <a href="${verificationLink}">Verify Email</a></p>`
     );
 
+    const { accessToken, refreshToken } = generateToken(user.id, user.email);
+
     res.status(201).json({
       message:
         "Registration successful. Please check your email for the verification link.",
+      accessToken,
+      refreshToken,
     });
   } catch (error) {
     res.status(500).json({
@@ -337,15 +324,10 @@ export async function login(req: Request, res: Response) {
     }
 
     if (existingUser.role === "Admin") {
-      const accessToken = generateAccessToken({
-        id: existingUser.id,
-        email: existingUser.email,
-      });
-
-      const refreshToken = generateRefreshToken({
-        id: existingUser.id,
-        email: existingUser.email,
-      });
+      const { accessToken, refreshToken } = generateToken(
+        existingUser.id,
+        existingUser.email
+      );
 
       await prisma.user.update({
         where: { id: existingUser.id },
@@ -394,15 +376,10 @@ export async function login(req: Request, res: Response) {
       return;
     }
 
-    const accessToken = generateAccessToken({
-      id: existingUser.id,
-      email: existingUser.email,
-    });
-
-    const refreshToken = generateRefreshToken({
-      id: existingUser.id,
-      email: existingUser.email,
-    });
+    const { accessToken, refreshToken } = generateToken(
+      existingUser.id,
+      existingUser.email
+    );
 
     await prisma.user.update({
       where: { id: existingUser.id },
@@ -496,15 +473,10 @@ export async function googleCallback(req: Request, res: Response) {
       );
     }
 
-    const accessToken = generateAccessToken({
-      id: existingUser.id,
-      email: existingUser.email,
-    });
-
-    const refreshToken = generateRefreshToken({
-      id: existingUser.id,
-      email: existingUser.email,
-    });
+    const { accessToken, refreshToken } = generateToken(
+      existingUser.id,
+      existingUser.email
+    );
 
     await prisma.user.update({
       where: { id: existingUser.id },
