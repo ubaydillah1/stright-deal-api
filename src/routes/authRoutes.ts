@@ -41,7 +41,6 @@ router.get("/verify-email", AuthController.verifyEmail);
 router.post(
   "/resend-verification-email",
   authorize([Role.Visitor]),
-  validateRequest(["email"]),
   AuthController.resendVerificationEmail
 );
 
