@@ -55,7 +55,7 @@ router.get("/get-token-cookies", AuthController.getTokenCookies);
 router.post(
   "/send-phone-otp",
   authorize([Role.Visitor]),
-  validateRequest(["phoneNumber", "email"]),
+  validateRequest(["phoneNumber"]),
   AuthController.sendPhoneOTP
 );
 
