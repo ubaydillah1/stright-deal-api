@@ -296,6 +296,11 @@ export async function register(req: Request, res: Response) {
 
     const { accessToken, refreshToken } = generateToken(user.id, user.email);
 
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { refreshToken },
+    });
+
     res.status(201).json({
       message:
         "Registration successful. Please check your email for the verification link.",
