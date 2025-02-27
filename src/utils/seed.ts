@@ -1,6 +1,4 @@
-import { TireReplacementTimeframe } from "@prisma/client";
-
-const {
+import {
   PrismaClient,
   Role,
   Provider,
@@ -14,8 +12,11 @@ const {
   AdditionalDisclosures,
   TiresType,
   StatusReview,
-} = require("@prisma/client");
-const { faker } = require("@faker-js/faker");
+  TireReplacementTimeframe,
+  AdditionalFeatures,
+  ActionType,
+} from "@prisma/client";
+import { faker } from "@faker-js/faker";
 
 const prisma = new PrismaClient();
 
@@ -24,16 +25,16 @@ function getRandomDate() {
   const rand = Math.random();
 
   if (rand < 0.3) {
-    // 30% kemungkinan mobil dibuat dalam minggu ini
+    // 30% kemungkinan dibuat dalam minggu ini
     const daysAgo = Math.floor(Math.random() * 7);
     return new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysAgo);
   } else if (rand < 0.7) {
-    // 40% kemungkinan mobil dibuat dalam bulan ini
+    // 40% kemungkinan dibuat dalam bulan ini
     const daysAgo = Math.floor(Math.random() * 30);
     return new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysAgo);
   } else {
     // 30% kemungkinan dibuat sebelum bulan ini
-    return faker.date.past(1); // 1 tahun terakhir
+    return faker.date.past({ years: 1 }); // 1 tahun terakhir
   }
 }
 
@@ -49,13 +50,9 @@ async function main() {
         lastName: faker.person.lastName(),
         password: faker.internet.password(),
         isEmailVerified: faker.datatype.boolean(),
-        provider: faker.helpers.arrayElement([
-          Provider.Local,
-          Provider.Google,
-          Provider.Apple,
-        ]),
-        role: faker.helpers.arrayElement([Role.Admin, Role.User, Role.Visitor]),
-        phoneNumber: `+1${faker.phone.number("##########")}`,
+        provider: faker.helpers.arrayElement(Object.values(Provider)),
+        role: faker.helpers.arrayElement(Object.values(Role)),
+        phoneNumber: `+1${faker.phone.number()}`,
         isPhoneVerified: faker.datatype.boolean(),
         avatar: faker.image.avatar(),
       },
@@ -65,58 +62,112 @@ async function main() {
 
   console.log("Seeding cars...");
 
-  // for (let i = 0; i < 20; i++) {
-  //   await prisma.car.create({
-  //     data: {
-  //       userId: faker.helpers.arrayElement(users).id,
-  //       slug: faker.lorem.slug(),
-  //       vin: faker.vehicle.vin(),
-  //       miliage: faker.number.int({ min: 1000, max: 200000 }),
-  //       statusReview: faker.helpers.arrayElement(Object.values(StatusReview)),
-  //       transmission_type: faker.helpers.arrayElement(
-  //         Object.values(TransmissionType)
-  //       ),
-  //       isSoloOwner: faker.datatype.boolean(),
-  //       color: faker.vehicle.color(),
-  //       loanOrLeaseStatus: faker.helpers.arrayElement(
-  //         Object.values(LoanOrLeaseStatus)
-  //       ),
-  //       loanCompany: faker.company.name(),
-  //       remainingBalance: faker.number.int({ min: 0, max: 50000 }),
-  //       isTradeIn: faker.datatype.boolean(),
-  //       plannedSaleTime: faker.helpers.arrayElement(
-  //         Object.values(PlannedSaleTime)
-  //       ),
-  //       additionalFeature: [faker.vehicle.type(), faker.vehicle.type()],
-  //       exteriorCondition: faker.helpers.arrayElement(
-  //         Object.values(ExteriorCondition)
-  //       ),
-  //       interiorDamage: faker.helpers.arrayElement(
-  //         Object.values(InteriorDamage)
-  //       ),
-  //       additionalDisclosures: faker.helpers.arrayElement(
-  //         Object.values(AdditionalDisclosures)
-  //       ),
-  //       keyCount: faker.number.int({ min: 1, max: 5 }),
-  //       tireSetCount: faker.number.int({ min: 1, max: 4 }),
-  //       tireReplacementTimeframe: faker.helpers.arrayElement(
-  //         Object.values(TireReplacementTimeframe)
-  //       ),
-  //       tiresType: faker.helpers.arrayElement(Object.values(TiresType)),
-  //       hasOriginalFactoryRims: faker.datatype.boolean(),
-  //       hasMechanicalIssues: faker.datatype.boolean(),
-  //       isDriveable: faker.datatype.boolean(),
-  //       hasAccidentOrClaimStatus: faker.datatype.boolean(),
-  //       overallConditionStatus: faker.helpers.arrayElement(
-  //         Object.values(ConditionStatus)
-  //       ),
-  //       plannedSaleTimeline: faker.helpers.arrayElement(
-  //         Object.values(PlannedSaleTimeline)
-  //       ),
-  //       createdAt: getRandomDate(),
-  //     },
-  //   });
-  // }
+  const cars = [];
+  for (let i = 0; i < 20; i++) {
+    const car = await prisma.car.create({
+      data: {
+        userId: faker.helpers.arrayElement(users).id,
+        slug: faker.lorem.slug(),
+        vin: faker.vehicle.vin(),
+        miliage: faker.number.int({ min: 1000, max: 200000 }),
+        statusReview: faker.helpers.arrayElement(Object.values(StatusReview)),
+        transmissionType: faker.helpers.arrayElement(
+          Object.values(TransmissionType)
+        ),
+        isSoleOwner: faker.datatype.boolean(),
+        color: faker.vehicle.color(),
+        loanOrLeaseStatus: faker.helpers.arrayElement(
+          Object.values(LoanOrLeaseStatus)
+        ),
+        loanCompany: faker.company.name(),
+        remainingBalance: faker.number.int({ min: 0, max: 50000 }),
+        monthlyPayment: faker.number.int({ min: 100, max: 1000 }),
+        monthsRemaining: faker.number.int({ min: 1, max: 60 }),
+        purchaseOptionAmount: faker.number.int({ min: 1000, max: 20000 }),
+        isTradeIn: faker.datatype.boolean(),
+        plannedSaleTime: faker.helpers.arrayElement(
+          Object.values(PlannedSaleTime)
+        ),
+        additionalFeatures: faker.helpers.arrayElements(
+          Object.values(AdditionalFeatures),
+          { min: 1, max: 3 }
+        ),
+        anyAdditionalFeatures: faker.lorem.sentence(),
+        exteriorCondition: faker.helpers.arrayElements(
+          Object.values(ExteriorCondition),
+          { min: 1, max: 3 }
+        ),
+        interiorDamage: faker.helpers.arrayElements(
+          Object.values(InteriorDamage),
+          { min: 1, max: 3 }
+        ),
+        additionalDisclosures: faker.helpers.arrayElement(
+          Object.values(AdditionalDisclosures)
+        ),
+        keyCount: faker.number.int({ min: 1, max: 5 }),
+        tireSetCount: faker.number.int({ min: 1, max: 4 }),
+        tireReplacementTimeframe: faker.helpers.arrayElement(
+          Object.values(TireReplacementTimeframe)
+        ),
+        tiresType: faker.helpers.arrayElement(Object.values(TiresType)),
+        hasOriginalFactoryRims: faker.datatype.boolean(),
+        hasMechanicalIssues: faker.datatype.boolean(),
+        isDriveable: faker.datatype.boolean(),
+        hasAccidentOrClaimStatus: faker.datatype.boolean(),
+        overallConditionStatus: faker.helpers.arrayElement(
+          Object.values(ConditionStatus)
+        ),
+        plannedSaleTimeline: faker.helpers.arrayElement(
+          Object.values(PlannedSaleTimeline)
+        ),
+        seen: faker.datatype.boolean(),
+        notes: faker.lorem.sentence(),
+        createdAt: getRandomDate(),
+      },
+    });
+    cars.push(car);
+  }
+
+  console.log("Seeding car images...");
+
+  for (const car of cars) {
+    for (let i = 0; i < 3; i++) {
+      await prisma.carImage.create({
+        data: {
+          carId: car.id,
+          imageUrl: faker.image.urlLoremFlickr({ category: "car" }),
+        },
+      });
+    }
+  }
+
+  console.log("Seeding activity logs...");
+
+  const activityLogs = [];
+  for (const car of cars) {
+    const activityLog = await prisma.activityLog.create({
+      data: {
+        carId: car.id,
+        notes: faker.lorem.sentence(),
+        actionType: faker.helpers.arrayElement(Object.values(ActionType)),
+        statusReviewLog: faker.helpers.arrayElement(
+          Object.values(StatusReview)
+        ),
+      },
+    });
+    activityLogs.push(activityLog);
+  }
+
+  console.log("Seeding notifications...");
+
+  for (const activityLog of activityLogs) {
+    await prisma.notification.create({
+      data: {
+        carId: activityLog.carId,
+        activityLogId: activityLog.id,
+      },
+    });
+  }
 
   console.log("Seeding completed!");
 }

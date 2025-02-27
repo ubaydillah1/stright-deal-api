@@ -17,7 +17,7 @@ router.get(
   AdminDashboardController.getGrafikSubmissions
 );
 router.get(
-  "/grafik-approvalStats",
+  "/grafik-approval-stats",
   AdminDashboardController.getGrafikApprovalStats
 );
 
