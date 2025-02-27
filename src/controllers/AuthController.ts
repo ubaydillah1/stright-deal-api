@@ -328,41 +328,7 @@ export async function login(req: Request, res: Response) {
       return;
     }
 
-    if (existingUser.role === "Admin") {
-      const { accessToken, refreshToken } = generateToken(
-        existingUser.id,
-        existingUser.email
-      );
-
-      await prisma.user.update({
-        where: { id: existingUser.id },
-        data: { refreshToken },
-      });
-
-      res.json({
-        message: "Admin login successfully",
-        refreshToken,
-        accessToken,
-      });
-      return;
-    }
-
-    if (!existingUser.isEmailVerified) {
-      res.status(403).json({
-        message: "Email user is not verified",
-        code: "EMAIL_NOT_VERIFIED",
-      });
-      return;
-    }
-
-    if (!existingUser.isPhoneVerified) {
-      res.status(403).json({
-        message: "Phone number is not verified",
-        code: "PHONE_NOT_VERIFIED",
-      });
-      return;
-    }
-
+    // Cek apakah akun terdaftar dengan login sosial
     if (existingUser.password === null) {
       res.status(400).json({
         message:
@@ -371,6 +337,7 @@ export async function login(req: Request, res: Response) {
       return;
     }
 
+    // Cek apakah password valid
     const isPasswordValid = await bcrypt.compare(
       password,
       existingUser.password
@@ -390,6 +357,35 @@ export async function login(req: Request, res: Response) {
       where: { id: existingUser.id },
       data: { refreshToken },
     });
+
+    if (!existingUser.isEmailVerified) {
+      res.status(403).json({
+        message: "Email user is not verified",
+        code: "EMAIL_NOT_VERIFIED",
+        accessToken,
+        refreshToken,
+      });
+      return;
+    }
+
+    if (!existingUser.isPhoneVerified) {
+      res.status(403).json({
+        message: "Phone number is not verified",
+        code: "PHONE_NOT_VERIFIED",
+        accessToken,
+        refreshToken,
+      });
+      return;
+    }
+
+    if (existingUser.role === "Admin") {
+      res.json({
+        message: "Admin login successfully",
+        refreshToken,
+        accessToken,
+      });
+      return;
+    }
 
     res.json({ accessToken, refreshToken });
   } catch (error) {
