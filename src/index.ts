@@ -28,6 +28,7 @@ app.use(
     origin: [
       "http://localhost:5173",
       "https://www.straightdeal.com",
+      "https://straightdeal.com",
       "https://testing-s-deal-vercel.vercel.app",
       "https://straight-deal.webflow.io",
       "http://127.0.0.1:5500",
