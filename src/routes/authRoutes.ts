@@ -36,10 +36,15 @@ router.post(
 );
 
 // Email verification after register
-router.get("/verify-email", AuthController.verifyEmail);
+router.get(
+  "/verify-email",
+  authorize([Role.Visitor]),
+  AuthController.verifyEmail
+);
 
 router.post(
   "/resend-verification-email",
+  authorize([Role.Visitor]),
   validateRequest(["email"]),
   AuthController.resendVerificationEmail
 );
@@ -54,12 +59,14 @@ router.get("/get-token-cookies", AuthController.getTokenCookies);
 // Get OTP
 router.post(
   "/send-phone-otp",
+  authorize([Role.Visitor]),
   validateRequest(["phoneNumber", "email"]),
   AuthController.sendPhoneOTP
 );
 
 router.post(
   "/verify-phone-otp",
+  authorize([Role.Visitor]),
   validateRequest(["phoneNumber", "otp"]),
   AuthController.verifyPhoneOTP
 );

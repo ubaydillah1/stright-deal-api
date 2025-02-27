@@ -209,7 +209,7 @@ export async function verifyEmail(req: Request, res: Response) {
 }
 
 export async function resendVerificationEmail(req: Request, res: Response) {
-  const { email } = req.body;
+  const { email } = (req as any).user;
 
   try {
     const user = await prisma.user.findUnique({
