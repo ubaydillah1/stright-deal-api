@@ -209,7 +209,6 @@ export async function verifyEmail(req: Request, res: Response) {
 export async function resendVerificationEmail(req: Request, res: Response) {
   const { email } = (req as any).user;
 
-  console.log(email);
 
   try {
     const user = await prisma.user.findUnique({
