@@ -51,7 +51,8 @@ const registerSchema = z.object({
 
 export const sendPhoneOTP = async (req: Request, res: Response) => {
   try {
-    const { phoneNumber, email } = req.body;
+    const { phoneNumber } = req.body;
+    const { email } = (req as any).user;
 
     if (!email || !phoneNumber) {
       res.status(400).json({ message: "Email and phone number are required" });
@@ -208,7 +209,6 @@ export async function verifyEmail(req: Request, res: Response) {
 
 export async function resendVerificationEmail(req: Request, res: Response) {
   const { email } = (req as any).user;
-
 
   try {
     const user = await prisma.user.findUnique({
