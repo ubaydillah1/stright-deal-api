@@ -468,3 +468,18 @@ export async function getUserCar(req: Request, res: Response) {
     });
   }
 }
+
+export async function getCarsUser(req: Request, res: Response) {
+  try {
+    const userId = (req as any).user.id;
+    const cars = await prisma.car.findMany({
+      where: { userId },
+    });
+    res.json({ cars, message: "success get user cars" });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error retrieving cars",
+      error: (error as Error).message,
+    });
+  }
+}
