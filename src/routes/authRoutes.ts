@@ -36,11 +36,7 @@ router.post(
 );
 
 // Email verification after register
-router.get(
-  "/verify-email",
-  authorize([Role.Visitor]),
-  AuthController.verifyEmail
-);
+router.get("/verify-email", AuthController.verifyEmail);
 
 router.post(
   "/resend-verification-email",
