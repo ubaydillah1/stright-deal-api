@@ -67,7 +67,8 @@ export const sendPhoneOTP = async (req: Request, res: Response) => {
       return;
     }
 
-    // Cari user berdasarkan email
+    console.log(email);
+
     const user = await prisma.user.findUnique({
       where: { email },
     });
@@ -89,7 +90,7 @@ export const sendPhoneOTP = async (req: Request, res: Response) => {
     const otp = generateOtp();
     const expiredAt = getOtpExpiration();
 
-    await prisma.user.update({
+    const data = await prisma.user.update({
       where: { email },
       data: {
         phoneNumber,
