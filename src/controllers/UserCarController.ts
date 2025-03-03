@@ -1,21 +1,16 @@
 import {
-  AdditionalDisclosures,
   ConditionStatus,
   ExteriorCondition,
   InteriorDamage,
   LoanOrLeaseStatus,
-  PlannedSaleTime,
   PlannedSaleTimeline,
-  TireReplacementTimeframe,
-  TransmissionType,
   TiresType,
-  ActionType,
 } from "@prisma/client";
 import prisma from "../config/prismaClient";
 import { Response, Request } from "express";
 import { supabase } from "../config/supabaseClient";
 
-function isValidEnumValue(enumObj: any, value: string): boolean {
+function isValidEnumValue(enumObj: any, value: any): boolean {
   return Object.values(enumObj).includes(value);
 }
 
@@ -23,133 +18,55 @@ function getEnumValues(enumObj: any): string[] {
   return Object.values(enumObj);
 }
 
-function getEnumValidationError(
-  enumObj: any,
-  field: string,
-  value: string
-): string {
-  const availableOptions = getEnumValues(enumObj);
-  return `Invalid ${field}: "${value}". Available options are: ${availableOptions.join(
-    ", "
-  )}`;
-}
-
-function validateStringArray(field: string, value: any): string | null {
-  if (!Array.isArray(value) || value.some((item) => typeof item !== "string")) {
-    return `Invalid ${field}: Must be an array of strings.`;
-  }
-  return null;
-}
-
-function validateEnumArray(
-  enumObj: any,
-  field: string,
-  values: any[]
-): string | null {
-  const invalidValues = values.filter(
-    (value) => !isValidEnumValue(enumObj, value)
-  );
-  if (invalidValues.length > 0) {
-    return `Invalid ${field}: "${invalidValues.join(
-      ", "
-    )}". Available options are: ${getEnumValues(enumObj).join(", ")}`;
-  }
-  return null;
-}
-
 export async function createCarForm(req: Request, res: Response) {
-  let {
+  const userId = (req as any).user.id;
+  const {
+    vin,
     miliage,
-    transmissionType,
-    isSoleOwner,
-    color,
     loanOrLeaseStatus,
     loanCompany,
+    remainingBalance,
     monthlyPayment,
     monthsRemaining,
     purchaseOptionAmount,
-    remainingBalance,
-    isTradeIn,
-    plannedSaleTime,
-    additionalFeatures,
-    anyAdditionalFeatures,
+    anyAftermarketFeatures,
     exteriorCondition,
     interiorDamage,
-    additionalDisclosures,
-    keyCount,
-    tireSetCount,
-    tireReplacementTimeframe,
     tiresType,
-    hasOriginalFactoryRims,
-    hasMechanicalIssues,
-    isDriveable,
-    hasAccidentOrClaimStatus,
+    isInvolvedAccidentInsurance,
+    amountClaimed,
     overallConditionStatus,
     plannedSaleTimeline,
+    year,
+    make,
+    model,
+    trim,
+    lowerPrice,
+    higherPrice,
   } = req.body;
 
-  const userId = (req as any).user.id;
-
-  if (typeof exteriorCondition === "string") {
-    exteriorCondition = exteriorCondition.split(",");
-  }
-  if (typeof interiorDamage === "string") {
-    interiorDamage = interiorDamage.split(",");
-  }
-
+  // **Cek Required Fields**
   const requiredFields = [
+    "vin",
+    "year",
+    "make",
+    "model",
+    "trim",
     "miliage",
-    "transmissionType",
-    "isSoleOwner",
-    "color",
     "loanOrLeaseStatus",
-    "isTradeIn",
-    "plannedSaleTime",
-    "additionalFeatures",
     "exteriorCondition",
     "interiorDamage",
-    "additionalDisclosures",
-    "keyCount",
-    "tireSetCount",
-    "tireReplacementTimeframe",
     "tiresType",
-    "hasOriginalFactoryRims",
-    "hasMechanicalIssues",
-    "isDriveable",
-    "hasAccidentOrClaimStatus",
+    "isInvolvedAccidentInsurance",
     "overallConditionStatus",
     "plannedSaleTimeline",
+    "lowerPrice",
+    "higherPrice",
   ];
 
-  const missingFields: string[] = [];
-
-  // Check for missing fields
-  requiredFields.forEach((field) => {
-    if (req.body[field] === undefined || req.body[field] === null) {
-      missingFields.push(field);
-    }
-  });
-
-  if (loanOrLeaseStatus === LoanOrLeaseStatus.Loan) {
-    if (!loanCompany) missingFields.push("loanCompany");
-    if (!remainingBalance) missingFields.push("remainingBalance");
-  }
-
-  if (loanOrLeaseStatus === LoanOrLeaseStatus.Lease) {
-    if (!monthlyPayment) missingFields.push("monthlyPayment");
-    if (!monthsRemaining) missingFields.push("monthsRemaining");
-    if (!purchaseOptionAmount) missingFields.push("purchaseOptionAmount");
-  }
-
-  requiredFields.forEach((field) => {
-    if (
-      req.body[field] === undefined ||
-      req.body[field] === null ||
-      (typeof req.body[field] === "string" && req.body[field].trim() === "")
-    ) {
-      missingFields.push(field);
-    }
-  });
+  const missingFields = requiredFields.filter(
+    (field) => req.body[field] === undefined
+  );
 
   if (missingFields.length > 0) {
     res.status(400).json({
@@ -159,130 +76,110 @@ export async function createCarForm(req: Request, res: Response) {
     return;
   }
 
-  // Validate enum values
-  const enumValidationErrors: string[] = [];
+  // **Cek Tipe Data**
+  const typeErrors: string[] = [];
 
-  if (!isValidEnumValue(TransmissionType, transmissionType)) {
-    enumValidationErrors.push(
-      getEnumValidationError(
-        TransmissionType,
-        "transmissionType",
-        transmissionType
-      )
-    );
+  if (typeof vin !== "string") typeErrors.push("vin must be a string");
+  if (typeof miliage !== "number") typeErrors.push("miliage must be a number");
+  if (typeof year !== "number") typeErrors.push("year must be a number");
+  if (typeof isInvolvedAccidentInsurance !== "boolean")
+    typeErrors.push("isInvolvedAccidentInsurance must be a boolean");
+  if (remainingBalance !== undefined && typeof remainingBalance !== "number")
+    typeErrors.push("remainingBalance must be a number");
+  if (monthlyPayment !== undefined && typeof monthlyPayment !== "number")
+    typeErrors.push("monthlyPayment must be a number");
+  if (monthsRemaining !== undefined && typeof monthsRemaining !== "number")
+    typeErrors.push("monthsRemaining must be a number");
+  if (lowerPrice !== undefined && typeof lowerPrice !== "number")
+    typeErrors.push("lowerPrice must be a number");
+  if (higherPrice !== undefined && typeof higherPrice !== "number")
+    typeErrors.push("higherPrice must be a number");
+  if (
+    purchaseOptionAmount !== undefined &&
+    typeof purchaseOptionAmount !== "number"
+  )
+    typeErrors.push("purchaseOptionAmount must be a number");
+
+  if (!Array.isArray(exteriorCondition))
+    typeErrors.push("exteriorCondition must be an array");
+  if (!Array.isArray(interiorDamage))
+    typeErrors.push("interiorDamage must be an array");
+
+  if (typeErrors.length > 0) {
+    res.status(400).json({
+      message: "Invalid data types",
+      errors: typeErrors,
+    });
+    return;
   }
+
+  // **Cek Validitas Enum**
+  const enumErrors: string[] = [];
 
   if (!isValidEnumValue(LoanOrLeaseStatus, loanOrLeaseStatus)) {
-    enumValidationErrors.push(
-      getEnumValidationError(
-        LoanOrLeaseStatus,
-        "loanOrLeaseStatus",
-        loanOrLeaseStatus
-      )
+    enumErrors.push(
+      `Invalid loanOrLeaseStatus: "${loanOrLeaseStatus}". Available options: ${getEnumValues(
+        LoanOrLeaseStatus
+      ).join(", ")}`
     );
   }
-
-  if (!isValidEnumValue(PlannedSaleTime, plannedSaleTime)) {
-    enumValidationErrors.push(
-      getEnumValidationError(
-        PlannedSaleTime,
-        "plannedSaleTime",
-        plannedSaleTime
-      )
-    );
-  }
-
-  const exteriorConditionError = validateEnumArray(
-    ExteriorCondition,
-    "exteriorCondition",
-    exteriorCondition
-  );
-  if (exteriorConditionError) enumValidationErrors.push(exteriorConditionError);
-
-  const interiorDamageError = validateEnumArray(
-    InteriorDamage,
-    "interiorDamage",
-    interiorDamage
-  );
-  if (interiorDamageError) enumValidationErrors.push(interiorDamageError);
-
-  if (!isValidEnumValue(TireReplacementTimeframe, tireReplacementTimeframe)) {
-    enumValidationErrors.push(
-      getEnumValidationError(
-        TireReplacementTimeframe,
-        "tireReplacementTimeframe",
-        tireReplacementTimeframe
-      )
-    );
-  }
-
   if (!isValidEnumValue(ConditionStatus, overallConditionStatus)) {
-    enumValidationErrors.push(
-      getEnumValidationError(
-        ConditionStatus,
-        "overallConditionStatus",
-        overallConditionStatus
-      )
+    enumErrors.push(
+      `Invalid overallConditionStatus: "${overallConditionStatus}". Available options: ${getEnumValues(
+        ConditionStatus
+      ).join(", ")}`
     );
   }
-
   if (!isValidEnumValue(PlannedSaleTimeline, plannedSaleTimeline)) {
-    enumValidationErrors.push(
-      getEnumValidationError(
-        PlannedSaleTimeline,
-        "plannedSaleTimeline",
-        plannedSaleTimeline
-      )
+    enumErrors.push(
+      `Invalid plannedSaleTimeline: "${plannedSaleTimeline}". Available options: ${getEnumValues(
+        PlannedSaleTimeline
+      ).join(", ")}`
     );
   }
-
-  if (!isValidEnumValue(AdditionalDisclosures, additionalDisclosures)) {
-    enumValidationErrors.push(
-      getEnumValidationError(
-        AdditionalDisclosures,
-        "additionalDisclosures",
-        additionalDisclosures
-      )
-    );
-  }
-
   if (!isValidEnumValue(TiresType, tiresType)) {
-    enumValidationErrors.push(
-      getEnumValidationError(TiresType, "tiresType", tiresType)
+    enumErrors.push(
+      `Invalid tiresType: "${tiresType}". Available options: ${getEnumValues(
+        TiresType
+      ).join(", ")}`
     );
   }
 
-  // Validate string arrays
-  const arrayValidationErrors: string[] = [];
-
-  const additionalFeaturesError = validateStringArray(
-    "additionalFeatures",
-    additionalFeatures
+  // **Cek Validitas Enum dalam Array**
+  const invalidExterior = exteriorCondition.filter(
+    (item: any) => !isValidEnumValue(ExteriorCondition, item)
   );
-  if (additionalFeaturesError)
-    arrayValidationErrors.push(additionalFeaturesError);
+  if (invalidExterior.length > 0) {
+    enumErrors.push(
+      `Invalid exteriorCondition values: ${invalidExterior.join(
+        ", "
+      )}. Available options: ${getEnumValues(ExteriorCondition).join(", ")}`
+    );
+  }
 
-  if (enumValidationErrors.length > 0 || arrayValidationErrors.length > 0) {
+  const invalidInterior = interiorDamage.filter(
+    (item: any) => !isValidEnumValue(InteriorDamage, item)
+  );
+  if (invalidInterior.length > 0) {
+    enumErrors.push(
+      `Invalid interiorDamage values: ${invalidInterior.join(
+        ", "
+      )}. Available options: ${getEnumValues(InteriorDamage).join(", ")}`
+    );
+  }
+
+  if (enumErrors.length > 0) {
     res.status(400).json({
-      message: "Validation errors",
-      errors: [...enumValidationErrors, ...arrayValidationErrors],
+      message: "Enum validation errors",
+      errors: enumErrors,
     });
     return;
   }
 
   try {
-    const validMileage = parseInt(miliage, 10);
-    const validRemainingBalance = parseFloat(remainingBalance);
-    const validKeyCount = parseInt(keyCount, 10);
-    const validTireSetCount = parseInt(tireSetCount, 10);
-    const validMonthlyPayment = parseFloat(monthlyPayment);
-    const validMonthsRemaining = parseFloat(monthsRemaining);
-    const validPurchaseOptionAmount = parseFloat(purchaseOptionAmount);
-
     const existingUser = await prisma.user.findUnique({
       where: { id: userId },
     });
-
     if (!existingUser) {
       res.status(404).json({
         message: "User not found",
@@ -293,48 +190,38 @@ export async function createCarForm(req: Request, res: Response) {
 
     const newCar = await prisma.car.create({
       data: {
-        User: {
-          connect: { id: userId },
-        },
-        miliage: validMileage,
-        transmissionType,
-        isSoleOwner,
-        color,
+        User: { connect: { id: userId } },
+        miliage,
         loanOrLeaseStatus,
         loanCompany,
-        remainingBalance: validRemainingBalance,
-        monthlyPayment: validMonthlyPayment,
-        monthsRemaining: validMonthsRemaining,
-        purchaseOptionAmount: validPurchaseOptionAmount,
-        isTradeIn,
-        plannedSaleTime,
-        additionalFeatures,
-        anyAdditionalFeatures,
+        remainingBalance,
+        monthlyPayment,
+        monthsRemaining,
+        purchaseOptionAmount,
         exteriorCondition,
         interiorDamage,
-        additionalDisclosures,
-        keyCount: validKeyCount,
-        tireSetCount: validTireSetCount,
-        tireReplacementTimeframe,
         tiresType,
-        hasOriginalFactoryRims,
-        hasMechanicalIssues,
-        isDriveable,
-        hasAccidentOrClaimStatus,
         overallConditionStatus,
         plannedSaleTimeline,
+        isInvolvedAccidentInsurance,
+        year,
+        make,
+        model,
+        trim,
+        vin,
+        lowerPrice,
+        higherPrice,
+        anyAftermarketFeatures,
+        amountClaimed,
       },
     });
 
-    await prisma.notification.create({
-      data: {
-        carId: newCar.id,
-      },
-    });
+    await prisma.notification.create({ data: { carId: newCar.id } });
 
     res.status(201).json(newCar);
   } catch (error) {
     const e = error as Error;
+    console.log(e.message);
     res.status(500).json({ message: "Error creating car", error: e.message });
   }
 }
@@ -407,33 +294,6 @@ export async function uploadImages(req: Request, res: Response) {
     res
       .status(500)
       .json({ message: "Error uploading images", error: e.message });
-  }
-}
-
-export async function updateVIN(req: Request, res: Response) {
-  try {
-    const { carId, vin } = req.body;
-
-    const existingCar = await prisma.car.findUnique({
-      where: { id: carId },
-    });
-
-    if (!existingCar) {
-      res.status(404).json({
-        message: "Car not found",
-      });
-      return;
-    }
-
-    const updatedCar = await prisma.car.update({
-      where: { id: carId },
-      data: { vin },
-    });
-
-    res.json(updatedCar);
-  } catch (error) {
-    const e = error as Error;
-    res.status(500).json({ message: "Error updating VIN", error: e.message });
   }
 }
 

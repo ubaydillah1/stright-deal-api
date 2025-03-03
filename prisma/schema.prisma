@@ -33,22 +33,10 @@ enum StatusReview {
   Rejected
 }
 
-enum TransmissionType {
-  AutomaticCars
-  ManualCars
-}
-
 enum LoanOrLeaseStatus {
   No
   Loan
   Lease
-}
-
-enum PlannedSaleTime {
-  In24Hours
-  ThisWeek
-  ThisMonth
-  NotSure
 }
 
 enum ExteriorCondition {
@@ -60,27 +48,12 @@ enum ExteriorCondition {
   NoExteriorDamage
 }
 
-enum AdditionalFeatures {
-  AftermarketRims
-  CosmeticModifications
-  AftermarketColoredWrap
-  AftermarketSuspension
-  AftermarketExhaust
-  AftermarketStereo
-  AftermarketPerformanceUpgrades
-}
-
 enum InteriorDamage {
   NoticeableStains
   PersistentOdors
   RipsOrTearsInSeats
   DamagedDashboardOrInteriorPanels
   NoInteriorDamage
-}
-
-enum TireReplacementTimeframe {
-  LessThan12MonthsAgo
-  OverAYearAgo
 }
 
 enum ConditionStatus {
@@ -95,16 +68,10 @@ enum PlannedSaleTimeline {
   NotReadyYet
 }
 
-enum AdditionalDisclosures {
-  RipsOrTearsInSeats
-  FireOrFloodDamage
-  PreviouslyStolen
-  NoNothingElseToDisclose
-}
-
 enum TiresType {
   AllSeason
   WinterTires
+  SummerTires
 }
 
 enum ActionType {
@@ -139,46 +106,39 @@ model User {
 }
 
 model Car {
-  id                       String                   @id @default(uuid())
-  User                     User                     @relation(fields: [userId], references: [id])
-  userId                   String
-  slug                     String?                  @unique
-  vin                      String?
-  miliage                  Int
-  statusReview             StatusReview             @default(NeedToReview)
-  transmissionType         TransmissionType
-  isSoleOwner              Boolean
-  color                    String
-  loanOrLeaseStatus        LoanOrLeaseStatus
-  loanCompany              String?
-  remainingBalance         Int?
-  monthlyPayment           Int?
-  monthsRemaining          Int?
-  purchaseOptionAmount     Int?
-  isTradeIn                Boolean
-  plannedSaleTime          PlannedSaleTime
-  additionalFeatures       AdditionalFeatures[]
-  anyAdditionalFeatures    String                   @default("")
-  exteriorCondition        ExteriorCondition[]
-  interiorDamage           InteriorDamage[]
-  additionalDisclosures    AdditionalDisclosures    @default(NoNothingElseToDisclose)
-  keyCount                 Int
-  tireSetCount             Int
-  tireReplacementTimeframe TireReplacementTimeframe
-  tiresType                TiresType
-  hasOriginalFactoryRims   Boolean
-  hasMechanicalIssues      Boolean
-  isDriveable              Boolean
-  hasAccidentOrClaimStatus Boolean
-  overallConditionStatus   ConditionStatus
-  plannedSaleTimeline      PlannedSaleTimeline
-  seen                     Boolean                  @default(false)
-  notes                    String?
-  activityLogs             ActivityLog[]
-  CarImages                CarImage[]
-  createdAt                DateTime                 @default(now())
-  updatedAt                DateTime                 @updatedAt
-  Notifications            Notification[]
+  id                          String              @id @default(uuid())
+  User                        User                @relation(fields: [userId], references: [id])
+  userId                      String
+  vin                         String
+  year                        Int
+  make                        String
+  model                       String
+  trim                        String
+  lowerPrice                  Int
+  higherPrice                 Int
+  miliage                     Int
+  statusReview                StatusReview        @default(NeedToReview)
+  loanOrLeaseStatus           LoanOrLeaseStatus
+  loanCompany                 String?
+  remainingBalance            Int?
+  monthlyPayment              Int?
+  monthsRemaining             Int?
+  purchaseOptionAmount        Int?
+  anyAftermarketFeatures      String?
+  exteriorCondition           ExteriorCondition[]
+  interiorDamage              InteriorDamage[]
+  tiresType                   TiresType
+  isInvolvedAccidentInsurance Boolean
+  amountClaimed               String?
+  overallConditionStatus      ConditionStatus
+  plannedSaleTimeline         PlannedSaleTimeline
+  seen                        Boolean             @default(false)
+  notes                       String?
+  activityLogs                ActivityLog[]
+  CarImages                   CarImage[]
+  createdAt                   DateTime            @default(now())
+  updatedAt                   DateTime            @updatedAt
+  Notifications               Notification[]
 
   @@map("cars")
 }

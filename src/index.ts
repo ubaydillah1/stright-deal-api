@@ -46,7 +46,6 @@ app.use("/api/admin/dashboard", authorize([Role.Admin]), adminDashboardRouter);
 app.use("/api/user", authorize([Role.User]), userCarRouter);
 
 app.get("/delete-users", async (req, res) => {
-  console.log(req.ip);
   try {
     await prisma.user.deleteMany();
     res.json({
