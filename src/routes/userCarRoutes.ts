@@ -6,6 +6,7 @@ const router = express.Router();
 router.get("/car", UserCarController.getUserCar);
 router.get("/cars", UserCarController.getCarsUser);
 router.post("/car", UserCarController.createCarForm);
+router.put("/car", UserCarController.updateCarForm);
 
 router.post(
   "/upload-images-car",
