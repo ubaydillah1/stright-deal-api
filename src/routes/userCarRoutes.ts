@@ -14,4 +14,10 @@ router.post(
   UserCarController.uploadImages
 );
 
+router.put(
+  "/update-images-car",
+  validateRequest(["carId", "imagesToReplace"]),
+  UserCarController.updateImages
+);
+
 export default router;

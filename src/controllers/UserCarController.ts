@@ -236,7 +236,6 @@ export async function createCarForm(req: Request, res: Response) {
     res.status(201).json(newCar);
   } catch (error) {
     const e = error as Error;
-    console.log(e.message);
     res.status(500).json({ message: "Error creating car", error: e.message });
   }
 }
@@ -457,13 +456,12 @@ export async function updateCarForm(req: Request, res: Response) {
     res.status(200).json(updatedCar);
   } catch (error) {
     const e = error as Error;
-    console.log(e.message);
     res.status(500).json({ message: "Error updating car", error: e.message });
   }
 }
 
 export async function uploadImages(req: Request, res: Response) {
-  const userId = (req as any).user.id; // Ambil ID user yang sedang login
+  const userId = (req as any).user.id;
   const { carId } = req.body;
   const files = (req as CustomRequest).files?.images;
 
@@ -473,7 +471,6 @@ export async function uploadImages(req: Request, res: Response) {
   }
 
   try {
-    // Cek apakah mobil ini milik user yang sedang login
     const car = await prisma.car.findUnique({
       where: { id: carId },
       select: { userId: true },
@@ -519,7 +516,6 @@ export async function uploadImages(req: Request, res: Response) {
         data: { publicUrl },
       } = supabase.storage.from("car-images").getPublicUrl(fileName);
 
-      // Simpan URL gambar ke database
       await prisma.carImage.create({
         data: {
           carId,
@@ -550,11 +546,13 @@ export async function updateImages(req: Request, res: Response) {
   const { carId, imagesToReplace } = req.body;
   const files = (req as CustomRequest).files?.images;
 
-  if (
-    !carId ||
-    !Array.isArray(imagesToReplace) ||
-    imagesToReplace.length === 0
-  ) {
+  const imagesArray = imagesToReplace
+    ? imagesToReplace.split(",").map((id: { trim: () => string }) => id.trim())
+    : [];
+
+  console.log(imagesArray);
+
+  if (!carId || imagesArray.length === 0) {
     res
       .status(400)
       .json({ message: "Car ID and images to replace are required" });
@@ -562,14 +560,29 @@ export async function updateImages(req: Request, res: Response) {
   }
 
   try {
+    const car = await prisma.car.findUnique({
+      where: { id: carId },
+      select: { userId: true },
+    });
+
+    if (!car) {
+      res.status(404).json({ message: "Car not found" });
+      return;
+    }
+
+    if (car.userId !== userId) {
+      res.status(403).json({ message: "You are not the owner of this car" });
+      return;
+    }
+
     const oldImages = await prisma.carImage.findMany({
       where: {
-        id: { in: imagesToReplace },
+        id: { in: imagesArray },
         carId,
       },
     });
 
-    if (oldImages.length !== imagesToReplace.length) {
+    if (oldImages.length !== imagesArray.length) {
       res.status(400).json({
         message: "Some image IDs are invalid or do not belong to this car",
       });
@@ -578,7 +591,7 @@ export async function updateImages(req: Request, res: Response) {
 
     const fileArray = Array.isArray(files) ? files : [files];
 
-    if (fileArray.length !== imagesToReplace.length) {
+    if (fileArray.length !== imagesArray.length) {
       res.status(400).json({
         message: "Number of new images must match the images being replaced",
       });
@@ -586,8 +599,11 @@ export async function updateImages(req: Request, res: Response) {
     }
 
     const deletePromises = oldImages.map(async (image) => {
-      const fileName = image.imageUrl.split("/").pop();
+      let fileName = image.imageUrl.split("/").pop();
+
       if (fileName) {
+        fileName = decodeURIComponent(fileName);
+        console.log(fileName);
         const { error } = await supabase.storage
           .from("car-images")
           .remove([fileName]);
@@ -617,7 +633,7 @@ export async function updateImages(req: Request, res: Response) {
       } = supabase.storage.from("car-images").getPublicUrl(fileName);
 
       await prisma.carImage.update({
-        where: { id: imagesToReplace[index] },
+        where: { id: imagesArray[index] },
         data: { imageUrl: publicUrl },
       });
 

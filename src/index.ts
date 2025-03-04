@@ -12,6 +12,7 @@ import limiter from "./utils/limiter";
 import { authorize } from "./middlewares/authorize";
 import { Role } from "@prisma/client";
 import profileRouter from "./routes/profileRoutes";
+import { supabase } from "./config/supabaseClient";
 
 const app = express();
 
@@ -101,6 +102,29 @@ app.get("/prisma", async (req, res) => {
     });
   }
 });
+
+async function deleteFile() {
+  let fileName =
+    "b88eaadf-4ba2-4130-80c8-8d5a26ee89ff_1741107344845_Screenshot%202025-02-25%20180006.png";
+
+  try {
+    fileName = decodeURIComponent(fileName);
+
+    const { error } = await supabase.storage
+      .from("car-images")
+      .remove([fileName]);
+
+    if (error) {
+      console.error("Error deleting file:", error.message);
+    } else {
+      console.log(`Successfully deleted file: ${fileName}`);
+    }
+  } catch (err) {
+    console.error("Unexpected error:", err);
+  }
+}
+
+// deleteFile();
 
 app.get("*", (req: Request, res: Response) => {
   res.json({
