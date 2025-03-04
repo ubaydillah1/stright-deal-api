@@ -571,7 +571,7 @@ export async function forgotPassword(req: Request, res: Response) {
     await sendEmail(
       email,
       "Email Verification Code",
-      `<p>Click the link to reset your password: <strong>${resetLink}</strong></p>`
+      `<p>Click the link to reset your password: <a href="${resetLink}">Reset Password</a></p>`
     );
 
     res.json({
