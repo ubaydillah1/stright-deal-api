@@ -49,6 +49,9 @@ export async function createCarForm(req: Request, res: Response) {
     trim,
     lowerPrice,
     higherPrice,
+    postalCode,
+    city,
+    province,
   } = req.body;
 
   // **Cek Required Fields**
@@ -68,6 +71,9 @@ export async function createCarForm(req: Request, res: Response) {
     "plannedSaleTimeline",
     "lowerPrice",
     "higherPrice",
+    "postalCode",
+    "city",
+    "province",
   ];
 
   const missingFields = requiredFields.filter(
@@ -219,6 +225,9 @@ export async function createCarForm(req: Request, res: Response) {
         higherPrice,
         anyAftermarketFeatures,
         amountClaimed,
+        postalCode,
+        city,
+        province,
       },
     });
 
@@ -258,6 +267,9 @@ export async function updateCarForm(req: Request, res: Response) {
     lowerPrice,
     higherPrice,
     carId,
+    postalCode,
+    city,
+    province,
   } = req.body;
 
   const requiredFields = [
@@ -276,6 +288,9 @@ export async function updateCarForm(req: Request, res: Response) {
     "plannedSaleTimeline",
     "lowerPrice",
     "higherPrice",
+    "postalCode",
+    "city",
+    "province",
   ];
 
   const missingFields = requiredFields.filter(
@@ -433,6 +448,9 @@ export async function updateCarForm(req: Request, res: Response) {
         higherPrice,
         anyAftermarketFeatures,
         amountClaimed,
+        postalCode,
+        city,
+        province,
       },
     });
 
@@ -460,9 +478,9 @@ export async function uploadImages(req: Request, res: Response) {
 
     const fileArray = Array.isArray(files) ? files : [files];
 
-    if (existingImages + fileArray.length > 5) {
+    if (existingImages + fileArray.length > 10) {
       res.status(400).json({
-        message: "Maximum of 5 images allowed per car",
+        message: "Maximum of 10 images allowed per car",
       });
       return;
     }

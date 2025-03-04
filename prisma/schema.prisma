@@ -109,7 +109,7 @@ model Car {
   id                          String              @id @default(uuid())
   User                        User                @relation(fields: [userId], references: [id])
   userId                      String
-  vin                         String
+  vin                         String              @unique
   year                        Int
   make                        String
   model                       String
@@ -132,6 +132,9 @@ model Car {
   amountClaimed               String?
   overallConditionStatus      ConditionStatus
   plannedSaleTimeline         PlannedSaleTimeline
+  postalCode                  String
+  province                    String
+  city                        String
   seen                        Boolean             @default(false)
   notes                       String?
   activityLogs                ActivityLog[]
