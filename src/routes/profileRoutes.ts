@@ -15,4 +15,8 @@ router.patch(
   DashboardController.changePassword
 );
 
+router.patch("/change-avatar", DashboardController.changeAvatar);
+
+router.delete("/delete-avatar", DashboardController.deleteAvatar);
+
 export default router;

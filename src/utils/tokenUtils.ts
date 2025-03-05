@@ -3,7 +3,7 @@ import "dotenv/config";
 
 export function generateAccessToken(user: any): string {
   return jwt.sign(user, process.env.JWT_ACCESS_TOKEN_SECRET!, {
-    expiresIn: "7s",
+    expiresIn: "1d",
   });
 }
 

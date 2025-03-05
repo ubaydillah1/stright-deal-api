@@ -105,14 +105,12 @@ app.get("/prisma", async (req, res) => {
 
 async function deleteFile() {
   let fileName =
-    "b88eaadf-4ba2-4130-80c8-8d5a26ee89ff_1741107344845_Screenshot%202025-02-25%20180006.png";
+    "5b3dced6-9204-4f1a-9bc7-670d9714dbcf_1741168346879_Screenshot 2025-02-22 154745.png";
 
   try {
     fileName = decodeURIComponent(fileName);
 
-    const { error } = await supabase.storage
-      .from("car-images")
-      .remove([fileName]);
+    const { error } = await supabase.storage.from("avatars").remove([fileName]);
 
     if (error) {
       console.error("Error deleting file:", error.message);
