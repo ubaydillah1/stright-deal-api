@@ -20,7 +20,7 @@ const PORT = process.env.PORT;
 const HOST = process.env.HOST;
 
 app.use(cookieParser());
-// app.use(limiter);
+app.use(limiter);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(fileUpload());
