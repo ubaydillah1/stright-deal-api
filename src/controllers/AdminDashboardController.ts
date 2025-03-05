@@ -258,22 +258,35 @@ export const getGrafikApprovalStats = async (req: Request, res: Response) => {
 export const searchCars = async (req: Request, res: Response) => {
   const query = req.query.s as string;
 
+  if (!query) {
+    res.json([]);
+    return;
+  }
+
   try {
     const cars = await prisma.car.findMany({
       where: {
         OR: [
-          { vin: { contains: query, mode: "insensitive" } },
-          { User: { firstName: { contains: query, mode: "insensitive" } } },
-          { User: { lastName: { contains: query, mode: "insensitive" } } },
+          { vin: { contains: query, mode: "insensitive", equals: query } },
+          {
+            User: {
+              firstName: {
+                equals: query,
+                contains: query,
+                mode: "insensitive",
+              },
+            },
+          },
+          {
+            User: {
+              lastName: { equals: query, contains: query, mode: "insensitive" },
+            },
+          },
         ],
       },
       include: {
-        User: {
-          select: {
-            firstName: true,
-            lastName: true,
-          },
-        },
+        User: true,
+        CarImages: true,
       },
     });
 

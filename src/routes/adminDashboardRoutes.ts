@@ -9,7 +9,7 @@ router.get("/cars", AdminDashboardController.getAllCars);
 router.get("/car/:id", AdminDashboardController.getCar);
 router.get("/cars/this-week", AdminDashboardController.getCarsByWeekHandler);
 router.get("/cars/this-month", AdminDashboardController.getCarsByMonthHandler);
-router.get("/cars", AdminDashboardController.searchCars);
+router.get("/search-cars", AdminDashboardController.searchCars);
 
 //  Grafik
 router.get(
