@@ -65,7 +65,7 @@ app.get("/set-cookie", (req, res) => {
     httpOnly: true,
     secure: true,
     sameSite: "none",
-    domain: ".domain-lain.com",
+    domain: ".straightdeal.com",
   });
   res.send("Cookie telah diatur");
 });
