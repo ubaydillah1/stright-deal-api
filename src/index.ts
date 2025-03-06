@@ -60,6 +60,16 @@ app.get("/delete-users", async (req, res) => {
   }
 });
 
+app.get("/set-cookie", (req, res) => {
+  res.cookie("nama_cookie", "nilai_cookie", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    domain: ".domain-lain.com",
+  });
+  res.send("Cookie telah diatur");
+});
+
 app.get("/delete-cars", async (req, res) => {
   try {
     await prisma.car.deleteMany();
