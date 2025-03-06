@@ -704,6 +704,9 @@ export async function getCarsUser(req: AuthenticatedRequest, res: Response) {
     const userId = req.user?.id;
     const cars = await prisma.car.findMany({
       where: { userId },
+      include: {
+        CarImages: true,
+      },
     });
     res.json({ cars, message: "success get user cars" });
   } catch (error) {
