@@ -62,12 +62,12 @@ app.get("/delete-users", async (req, res) => {
 
 app.get("/set-cookie", (req, res) => {
   res.cookie("nama_cookie", "nilai_cookie", {
+    domain: ".domain-lain.com",
     httpOnly: true,
     secure: true,
     sameSite: "none",
-    domain: ".straightdeal.com",
   });
-  res.send("Cookie telah diatur");
+  res.json({ message: "Cookie telah diatur" });
 });
 
 app.get("/delete-cars", async (req, res) => {
