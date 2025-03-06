@@ -8,7 +8,7 @@ import cookieParser from "cookie-parser";
 import userCarRouter from "./routes/userCarRoutes";
 // import "./utils/seed";
 import fileUpload from "express-fileupload";
-import limiter from "./utils/limiter";
+// import limiter from "./utils/limiter";
 import { authorize } from "./middlewares/authorize";
 import { Role } from "@prisma/client";
 import profileRouter from "./routes/profileRoutes";
@@ -20,7 +20,7 @@ const PORT = process.env.PORT;
 const HOST = process.env.HOST;
 
 app.use(cookieParser());
-app.use(limiter);
+// app.use(limiter);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(fileUpload());
