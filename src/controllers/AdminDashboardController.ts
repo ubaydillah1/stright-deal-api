@@ -74,7 +74,7 @@ export async function getCarsByWeekHandler(req: Request, res: Response) {
 
 export async function changeStatus(req: Request, res: Response) {
   try {
-    const { statusReview, carId } = req.body;
+    const { statusReview, carId, notes } = req.body;
 
     const validStatuses = [
       "NeedToReview",
@@ -94,8 +94,26 @@ export async function changeStatus(req: Request, res: Response) {
 
     const updatedCar = await prisma.car.update({
       where: { id: carId },
-      data: { statusReview },
+      data: { statusReview, notes },
+      include: { User: true },
     });
+
+    if (statusReview === "Rejected") {
+      await sendEmail(
+        updatedCar.User.email,
+        "Your Car Listing Has Been Rejected - Stright Deal",
+        `<p>Dear ${updatedCar.User.firstName} ${updatedCar.User.lastName},</p>
+        <p>We regret to inform you that your car listing with ID <strong>${carId}</strong> has been rejected.</p>
+        <p><strong>Reason for Rejection:</strong></p>
+        <blockquote style="background: #f8f8f8; padding: 10px; border-left: 3px solid red;">
+          ${notes}
+        </blockquote>
+        <p>Please review the provided information and make the necessary corrections before resubmitting.</p>
+        <p>Thank you for using <strong>Stright Deal</strong>.</p>
+        <p>Best regards,</p>
+        <p>The Stright Deal Team</p>`
+      );
+    }
 
     const newActivityLog = await prisma.activityLog.create({
       data: {
