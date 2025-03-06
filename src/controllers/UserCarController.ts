@@ -33,6 +33,7 @@ export async function createCarForm(req: AuthenticatedRequest, res: Response) {
   const userId = req.user?.id;
   const {
     vin,
+    name,
     miliage,
     loanOrLeaseStatus,
     loanCompany,
@@ -66,6 +67,7 @@ export async function createCarForm(req: AuthenticatedRequest, res: Response) {
     "make",
     "model",
     "trim",
+    "name",
     "miliage",
     "loanOrLeaseStatus",
     "exteriorCondition",
@@ -225,6 +227,7 @@ export async function createCarForm(req: AuthenticatedRequest, res: Response) {
         model,
         trim,
         vin,
+        name,
         lowerPrice,
         higherPrice,
         anyAftermarketFeatures,
@@ -273,6 +276,7 @@ export async function updateCarForm(req: AuthenticatedRequest, res: Response) {
     postalCode,
     city,
     province,
+    name,
   } = req.body;
 
   const requiredFields = [
@@ -280,6 +284,7 @@ export async function updateCarForm(req: AuthenticatedRequest, res: Response) {
     "year",
     "make",
     "model",
+    "name",
     "trim",
     "miliage",
     "loanOrLeaseStatus",
@@ -447,6 +452,7 @@ export async function updateCarForm(req: AuthenticatedRequest, res: Response) {
         make,
         model,
         trim,
+        name,
         lowerPrice,
         higherPrice,
         anyAftermarketFeatures,

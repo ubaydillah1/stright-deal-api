@@ -22,6 +22,7 @@
   - Added the required column `lowerPrice` to the `cars` table without a default value. This is not possible if the table is not empty.
   - Added the required column `make` to the `cars` table without a default value. This is not possible if the table is not empty.
   - Added the required column `model` to the `cars` table without a default value. This is not possible if the table is not empty.
+  - Added the required column `name` to the `cars` table without a default value. This is not possible if the table is not empty.
   - Added the required column `trim` to the `cars` table without a default value. This is not possible if the table is not empty.
   - Added the required column `year` to the `cars` table without a default value. This is not possible if the table is not empty.
   - Made the column `vin` on table `cars` required. This step will fail if there are existing NULL values in that column.
@@ -57,6 +58,7 @@ ADD COLUMN     "isInvolvedAccidentInsurance" BOOLEAN NOT NULL,
 ADD COLUMN     "lowerPrice" INTEGER NOT NULL,
 ADD COLUMN     "make" TEXT NOT NULL,
 ADD COLUMN     "model" TEXT NOT NULL,
+ADD COLUMN     "name" TEXT NOT NULL,
 ADD COLUMN     "trim" TEXT NOT NULL,
 ADD COLUMN     "year" INTEGER NOT NULL,
 ALTER COLUMN "vin" SET NOT NULL;
