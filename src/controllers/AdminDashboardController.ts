@@ -94,7 +94,7 @@ export async function changeStatus(req: Request, res: Response) {
 
     const updatedCar = await prisma.car.update({
       where: { id: carId },
-      data: { statusReview, notes },
+      data: { statusReview },
       include: { User: true },
     });
 
@@ -115,13 +115,27 @@ export async function changeStatus(req: Request, res: Response) {
       );
     }
 
-    const newActivityLog = await prisma.activityLog.create({
-      data: {
-        carId,
-        actionType: "ReviewedSubmission",
-        statusReviewLog: statusReview,
-      },
-    });
+    let newActivityLog;
+
+    if (!notes) {
+      newActivityLog = await prisma.activityLog.create({
+        data: {
+          carId,
+          actionType: "ReviewedSubmission",
+          statusReviewLog: statusReview,
+          notes: "",
+        },
+      });
+    } else {
+      newActivityLog = await prisma.activityLog.create({
+        data: {
+          carId,
+          actionType: "ReviewedSubmission",
+          statusReviewLog: statusReview,
+          notes,
+        },
+      });
+    }
 
     await prisma.notification.create({
       data: {
@@ -135,42 +149,6 @@ export async function changeStatus(req: Request, res: Response) {
     });
   } catch (error) {
     res.status(500).json({ message: "Error updating statusReview", error });
-  }
-}
-
-export async function addNotes(req: Request, res: Response) {
-  try {
-    const { notes, carId } = req.body;
-
-    const updatedCar = await prisma.car.update({
-      where: { id: carId },
-      data: { notes },
-      include: {
-        User: true,
-      },
-    });
-
-    await sendEmail(
-      updatedCar.User.email,
-      "Your Car Listing Has Been Rejected - Stright Deal",
-      `<p>Dear ${updatedCar.User.firstName} ${updatedCar.User.lastName},</p>
-      <p>We regret to inform you that your car listing with ID <strong>${carId}</strong> has been rejected.</p>
-      <p><strong>Reason for Rejection:</strong></p>
-      <blockquote style="background: #f8f8f8; padding: 10px; border-left: 3px solid red;">
-        ${notes}
-      </blockquote>
-      <p>Please review the provided information and make the necessary corrections before resubmitting.</p>
-      <p>Thank you for using <strong>Stright Deal</strong>.</p>
-      <p>Best regards,</p>
-      <p>The Stright Deal Team</p>`
-    );
-
-    res.json({
-      message: "Notes added successfully",
-      data: updatedCar,
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Error adding notes", error });
   }
 }
 

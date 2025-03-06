@@ -28,12 +28,6 @@ router.patch(
   AdminDashboardController.changeStatus
 );
 
-router.patch(
-  "/cars/notes",
-  validateRequest(["notes", "carId"]),
-  AdminDashboardController.addNotes
-);
-
 // Log Feature
 router.get("/activity-logs", AdminDashboardController.getAllActivityLogs);
 router.get(
