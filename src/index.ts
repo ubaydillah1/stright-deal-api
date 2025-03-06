@@ -6,9 +6,8 @@ import cors from "cors";
 import prisma from "./config/prismaClient";
 import cookieParser from "cookie-parser";
 import userCarRouter from "./routes/userCarRoutes";
-// import "./utils/seed";
 import fileUpload from "express-fileupload";
-// import limiter from "./utils/limiter";
+import limiter from "./utils/limiter";
 import { authorize } from "./middlewares/authorize";
 import { Role } from "@prisma/client";
 import profileRouter from "./routes/profileRoutes";
@@ -20,7 +19,7 @@ const PORT = process.env.PORT;
 const HOST = process.env.HOST;
 
 app.use(cookieParser());
-// app.use(limiter);
+app.use(limiter);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(fileUpload());
@@ -58,16 +57,6 @@ app.get("/delete-users", async (req, res) => {
       message: error.message,
     });
   }
-});
-
-app.get("/set-cookie", (req, res) => {
-  res.cookie("nama_cookie", "nilai_cookie", {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-    // domain: ".straightdeal.com",
-  });
-  res.json({ message: "Cookie telah diatur" });
 });
 
 app.get("/delete-cars", async (req, res) => {

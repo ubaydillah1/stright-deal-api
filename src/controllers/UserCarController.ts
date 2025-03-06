@@ -9,23 +9,28 @@ import {
 import prisma from "../config/prismaClient";
 import { Response, Request } from "express";
 import { supabase } from "../config/supabaseClient";
+import { AuthenticatedRequest } from "../middlewares/authorize";
+import { FileArray, UploadedFile } from "express-fileupload";
 
-interface CustomRequest extends Request {
-  files?: {
-    images?: any | any[];
-  };
+export interface FilesRequest extends AuthenticatedRequest {
+  files?: FileArray | null;
 }
 
-function isValidEnumValue(enumObj: any, value: any): boolean {
-  return Object.values(enumObj).includes(value);
+function isValidEnumValue<T extends Record<string, string | number>>(
+  enumObj: T,
+  value: unknown
+): boolean {
+  return Object.values(enumObj).includes(value as T[keyof T]);
 }
 
-function getEnumValues(enumObj: any): string[] {
-  return Object.values(enumObj);
+function getEnumValues<T extends Record<string, string | number>>(
+  enumObj: T
+): string[] {
+  return Object.values(enumObj).map(String);
 }
 
-export async function createCarForm(req: Request, res: Response) {
-  const userId = (req as any).user.id;
+export async function createCarForm(req: AuthenticatedRequest, res: Response) {
+  const userId = req.user?.id;
   const {
     vin,
     miliage,
@@ -157,9 +162,8 @@ export async function createCarForm(req: Request, res: Response) {
     );
   }
 
-  // **Cek Validitas Enum dalam Array**
   const invalidExterior = exteriorCondition.filter(
-    (item: any) => !isValidEnumValue(ExteriorCondition, item)
+    (item: unknown) => !isValidEnumValue(ExteriorCondition, item)
   );
   if (invalidExterior.length > 0) {
     enumErrors.push(
@@ -170,7 +174,7 @@ export async function createCarForm(req: Request, res: Response) {
   }
 
   const invalidInterior = interiorDamage.filter(
-    (item: any) => !isValidEnumValue(InteriorDamage, item)
+    (item: unknown) => !isValidEnumValue(InteriorDamage, item)
   );
   if (invalidInterior.length > 0) {
     enumErrors.push(
@@ -240,8 +244,8 @@ export async function createCarForm(req: Request, res: Response) {
   }
 }
 
-export async function updateCarForm(req: Request, res: Response) {
-  const userId = (req as any).user.id;
+export async function updateCarForm(req: AuthenticatedRequest, res: Response) {
+  const userId = req.user?.id;
   const {
     vin,
     miliage,
@@ -372,7 +376,7 @@ export async function updateCarForm(req: Request, res: Response) {
   }
 
   const invalidExterior = exteriorCondition.filter(
-    (item: any) => !isValidEnumValue(ExteriorCondition, item)
+    (item: unknown) => !isValidEnumValue(ExteriorCondition, item)
   );
   if (invalidExterior.length > 0) {
     enumErrors.push(
@@ -383,7 +387,7 @@ export async function updateCarForm(req: Request, res: Response) {
   }
 
   const invalidInterior = interiorDamage.filter(
-    (item: any) => !isValidEnumValue(InteriorDamage, item)
+    (item: unknown) => !isValidEnumValue(InteriorDamage, item)
   );
   if (invalidInterior.length > 0) {
     enumErrors.push(
@@ -460,10 +464,10 @@ export async function updateCarForm(req: Request, res: Response) {
   }
 }
 
-export async function uploadImages(req: Request, res: Response) {
-  const userId = (req as any).user.id;
+export async function uploadImages(req: FilesRequest, res: Response) {
+  const userId = req.user?.id;
   const { carId } = req.body;
-  const files = (req as CustomRequest).files?.images;
+  const files = req.files?.images;
 
   if (!carId) {
     res.status(400).json({ message: "Car ID is required" });
@@ -490,7 +494,7 @@ export async function uploadImages(req: Request, res: Response) {
       where: { carId },
     });
 
-    const fileArray = Array.isArray(files) ? files : [files];
+    const fileArray = files ? (Array.isArray(files) ? files : [files]) : [];
 
     if (existingImages + fileArray.length > 10) {
       res.status(400).json({
@@ -541,16 +545,14 @@ export async function uploadImages(req: Request, res: Response) {
   }
 }
 
-export async function updateImages(req: Request, res: Response) {
-  const userId = (req as any).user.id;
+export async function updateImages(req: FilesRequest, res: Response) {
+  const userId = req.user?.id;
   const { carId, imagesToReplace } = req.body;
-  const files = (req as CustomRequest).files?.images;
+  const files = req.files?.images;
 
   const imagesArray = imagesToReplace
     ? imagesToReplace.split(",").map((id: { trim: () => string }) => id.trim())
     : [];
-
-  console.log(imagesArray);
 
   if (!carId || imagesArray.length === 0) {
     res
@@ -589,7 +591,7 @@ export async function updateImages(req: Request, res: Response) {
       return;
     }
 
-    const fileArray = Array.isArray(files) ? files : [files];
+    const fileArray = files ? (Array.isArray(files) ? files : [files]) : [];
 
     if (fileArray.length !== imagesArray.length) {
       res.status(400).json({
@@ -603,7 +605,7 @@ export async function updateImages(req: Request, res: Response) {
 
       if (fileName) {
         fileName = decodeURIComponent(fileName);
-        console.log(fileName);
+
         const { error } = await supabase.storage
           .from("car-images")
           .remove([fileName]);
@@ -655,9 +657,9 @@ export async function updateImages(req: Request, res: Response) {
   }
 }
 
-export async function getUserCar(req: Request, res: Response) {
+export async function getUserCar(req: AuthenticatedRequest, res: Response) {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user?.id;
     const { carId } = req.query;
     if (!carId || typeof carId !== "string") {
       res.status(400).json({ message: "Car ID is required" });
@@ -691,9 +693,9 @@ export async function getUserCar(req: Request, res: Response) {
   }
 }
 
-export async function getCarsUser(req: Request, res: Response) {
+export async function getCarsUser(req: AuthenticatedRequest, res: Response) {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user?.id;
     const cars = await prisma.car.findMany({
       where: { userId },
     });

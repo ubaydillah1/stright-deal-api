@@ -5,7 +5,6 @@ export async function getUserGoogleData(accessToken: string): Promise<any> {
     );
     return await response.json();
   } catch (error: any) {
-    console.error("Error fetching user data:", error.message);
     return null;
   }
 }

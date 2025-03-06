@@ -1,15 +1,13 @@
 import { PrismaClient } from "@prisma/client";
-import { Request, Response } from "express";
+import { Response } from "express";
 import bcrypt from "bcrypt";
 import { z } from "zod";
 import { supabase } from "../config/supabaseClient";
+import { AuthenticatedRequest } from "../middlewares/authorize";
+import { FilesRequest } from "./UserCarController";
 const prisma = new PrismaClient();
 
-interface AuthRequest extends Request {
-  user?: { id: string; email: string };
-}
-
-export const changeName = async (req: AuthRequest, res: Response) => {
+export const changeName = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { firstName, lastName } = req.body;
     const { id } = req.user || {};
@@ -34,7 +32,10 @@ const passwordSchema = z
   .string()
   .min(8, "Password must be at least 8 characters");
 
-export const changePassword = async (req: AuthRequest, res: Response) => {
+export const changePassword = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
   try {
     const { newPassword } = req.body;
     const { id } = req.user || {};
@@ -61,9 +62,9 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const changeAvatar = async (req: Request, res: Response) => {
-  const userId = (req as any).user?.id;
-  const file = (req as any).files?.avatar;
+export const changeAvatar = async (req: FilesRequest, res: Response) => {
+  const userId = req.user?.id;
+  const file = req.files?.avatar;
 
   if (!userId || !file) {
     res.status(400).json({ message: "User ID and avatar file are required" });
@@ -131,8 +132,11 @@ export const changeAvatar = async (req: Request, res: Response) => {
   }
 };
 
-export const deleteAvatar = async (req: Request, res: Response) => {
-  const userId = (req as any).user?.id;
+export const deleteAvatar = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  const userId = req.user?.id;
 
   if (!userId) {
     res.status(400).json({ message: "User ID is required" });

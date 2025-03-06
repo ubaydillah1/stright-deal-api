@@ -1,12 +1,13 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { PrismaClient, Role } from "@prisma/client";
+import { User } from "../utils/tokenUtils";
 
 const prisma = new PrismaClient();
 const ACCESS_TOKEN_SECRET = process.env.JWT_ACCESS_TOKEN_SECRET!;
 
-interface AuthenticatedRequest extends Request {
-  user?: { id: string; email: string };
+export interface AuthenticatedRequest extends Request {
+  user?: User;
 }
 
 export function authorize(allowedRoles: Role[]) {

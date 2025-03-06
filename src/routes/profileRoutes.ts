@@ -9,6 +9,7 @@ router.patch(
   validateRequest(["firstName", "lastName"]),
   DashboardController.changeName
 );
+
 router.patch(
   "/change-password",
   validateRequest(["newPassword"]),
@@ -16,7 +17,6 @@ router.patch(
 );
 
 router.patch("/change-avatar", DashboardController.changeAvatar);
-
 router.delete("/delete-avatar", DashboardController.deleteAvatar);
 
 export default router;

@@ -16,6 +16,7 @@ import getAccessTokenFromRefreshToken from "../utils/getAccessTokenFromRefreshTo
 import { z } from "zod";
 import { isValidPhoneNumber } from "libphonenumber-js";
 import generateToken from "../utils/generateToken";
+import { AuthenticatedRequest } from "../middlewares/authorize";
 
 const serverUrl = process.env.SERVER_URL;
 const clientUrl = process.env.CLIENT_URL;
@@ -49,10 +50,13 @@ const registerSchema = z.object({
   password: passwordSchema,
 });
 
-export const sendPhoneOTP = async (req: Request, res: Response) => {
+export const sendPhoneOTP = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
   try {
     const { phoneNumber } = req.body;
-    const { email } = (req as any).user;
+    const { email } = req?.user || {};
 
     if (!email || !phoneNumber) {
       res.status(400).json({ message: "Email and phone number are required" });
@@ -66,8 +70,6 @@ export const sendPhoneOTP = async (req: Request, res: Response) => {
       });
       return;
     }
-
-    console.log(email);
 
     const user = await prisma.user.findUnique({
       where: { email },
@@ -90,7 +92,7 @@ export const sendPhoneOTP = async (req: Request, res: Response) => {
     const otp = generateOtp();
     const expiredAt = getOtpExpiration();
 
-    const data = await prisma.user.update({
+    await prisma.user.update({
       where: { email },
       data: {
         phoneNumber,
@@ -208,8 +210,16 @@ export async function verifyEmail(req: Request, res: Response) {
   }
 }
 
-export async function resendVerificationEmail(req: Request, res: Response) {
-  const { email } = (req as any).user;
+export async function resendVerificationEmail(
+  req: AuthenticatedRequest,
+  res: Response
+) {
+  const { email } = req?.user || {};
+
+  if (!email) {
+    res.status(400).json({ message: "User email is missing" });
+    return;
+  }
 
   try {
     const user = await prisma.user.findUnique({
@@ -405,8 +415,8 @@ export async function login(req: Request, res: Response) {
   }
 }
 
-export async function logout(req: Request, res: Response) {
-  const { id } = (req as any).user.id;
+export async function logout(req: AuthenticatedRequest, res: Response) {
+  const { id } = req?.user || {};
 
   const deleteUser = await prisma.user.update({
     where: { id },
@@ -505,9 +515,9 @@ export async function googleCallback(req: Request, res: Response) {
     return res.redirect(
       `${clientUrl}/success?status=login&access_token=${accessToken}`
     );
-  } catch (error: any) {
+  } catch (error) {
     return res.redirect(
-      `${clientUrl}/failed?status=login&error=${error.message}`
+      `${clientUrl}/failed?status=login&error=${(error as Error).message}`
     );
   }
 }
@@ -614,13 +624,13 @@ export async function getResetPasswordPage(req: Request, res: Response) {
       );
     }
 
-    return res.redirect(
+    res.redirect(
       `${clientUrl}/success?status=reset&token=${token}&email=${user.email}`
     );
-  } catch (error: any) {
-    return res.redirect(
+  } catch (error) {
+    res.redirect(
       `${clientUrl}/failed?status=reset&error=${encodeURIComponent(
-        error.message
+        (error as Error).message
       )}`
     );
   }
@@ -683,12 +693,12 @@ export async function refreshTokenHandler(req: Request, res: Response) {
   }
 }
 
-export async function getUser(req: Request, res: Response) {
+export async function getUser(req: AuthenticatedRequest, res: Response) {
   try {
-    const user = (req as any).user;
+    const user = req.user;
 
     const userData = await prisma.user.findUnique({
-      where: { id: user.id },
+      where: { id: user?.id },
       select: {
         id: true,
         email: true,

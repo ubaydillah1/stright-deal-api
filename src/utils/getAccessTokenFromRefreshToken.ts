@@ -23,7 +23,6 @@ async function getAccessTokenFromRefreshToken(refreshToken: string) {
       throw new Error("Invalid refresh token");
     }
 
-    // Buat access token baru
     const accessToken = jwt.sign(
       {
         id: user.id,
@@ -31,7 +30,7 @@ async function getAccessTokenFromRefreshToken(refreshToken: string) {
         role: user.role,
       },
       ACCESS_TOKEN_SECRET!,
-      { expiresIn: "10s" }
+      { expiresIn: "15m" }
     );
 
     return { accessToken };
