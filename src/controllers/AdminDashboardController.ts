@@ -271,15 +271,17 @@ export const searchCars = async (req: Request, res: Response) => {
           {
             User: {
               firstName: {
-                equals: query,
-                contains: query,
+                startsWith: query,
                 mode: "insensitive",
               },
             },
           },
           {
             User: {
-              lastName: { equals: query, contains: query, mode: "insensitive" },
+              lastName: {
+                startsWith: query,
+                mode: "insensitive",
+              },
             },
           },
         ],

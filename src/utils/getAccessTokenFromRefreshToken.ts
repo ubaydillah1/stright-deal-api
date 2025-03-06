@@ -30,7 +30,7 @@ async function getAccessTokenFromRefreshToken(refreshToken: string) {
         role: user.role,
       },
       ACCESS_TOKEN_SECRET!,
-      { expiresIn: "15m" }
+      { expiresIn: "10s" }
     );
 
     return { accessToken };
