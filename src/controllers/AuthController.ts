@@ -296,6 +296,12 @@ export async function register(req: Request, res: Response) {
 
     const { accessToken, refreshToken } = generateToken(user.id, user.email);
 
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      sameSite: "none",
+      secure: true,
+    });
+
     await prisma.user.update({
       where: { id: user.id },
       data: { refreshToken },
@@ -352,6 +358,12 @@ export async function login(req: Request, res: Response) {
       existingUser.id,
       existingUser.email
     );
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      sameSite: "none",
+      secure: true,
+    });
 
     await prisma.user.update({
       where: { id: existingUser.id },
