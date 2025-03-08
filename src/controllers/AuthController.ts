@@ -711,3 +711,27 @@ export async function getUser(req: AuthenticatedRequest, res: Response) {
     res.status(500).json({ message: "Internal Server Error" });
   }
 }
+
+export async function checkVin(req: Request, res: Response) {
+  const { vin } = req.body;
+  try {
+    const data = await prisma.car.findUnique({
+      where: {
+        vin: vin,
+      },
+    });
+
+    if (data) {
+      res.json({
+        message: "Vin already in use",
+      });
+      return;
+    }
+
+    res.json({
+      message: "Success",
+    });
+  } catch (error) {
+    res.status(500).json({ message: (error as Error).message });
+  }
+}

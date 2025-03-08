@@ -80,4 +80,7 @@ router.get(
   AuthController.getUser
 );
 
+// Check vin
+router.post("/check-vin", validateRequest(["vin"]), AuthController.checkVin);
+
 export default router;
