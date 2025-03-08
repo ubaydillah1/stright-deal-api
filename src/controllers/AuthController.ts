@@ -722,7 +722,7 @@ export async function checkVin(req: Request, res: Response) {
     });
 
     if (data) {
-      res.json({
+      res.status(400).json({
         message: "Vin already in use",
       });
       return;
