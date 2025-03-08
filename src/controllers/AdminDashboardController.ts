@@ -9,6 +9,7 @@ import {
   getActivityLogsByWeekQuery,
 } from "../utils/filterActivityLogsByQuery";
 import { sendEmail } from "../utils/emailServiceSand";
+import { ActivityLog } from "@prisma/client";
 
 export async function getAllCars(req: Request, res: Response) {
   try {
@@ -84,58 +85,48 @@ export async function changeStatus(req: Request, res: Response) {
       "Rejected",
     ];
 
+    if (!carId) {
+      res.status(400).json({ message: "carId is required" });
+      return;
+    }
+
     if (!statusReview || !validStatuses.includes(statusReview)) {
       res.status(400).json({
-        message:
-          "Invalid statusReview. Allowed values: " + validStatuses.join(", "),
+        message: `Invalid statusReview. Allowed values: ${validStatuses.join(
+          ", "
+        )}`,
       });
       return;
     }
 
+    if (statusReview === "Rejected" && !notes) {
+      res.status(400).json({
+        message: "Notes are required when rejecting a car listing",
+      });
+      return;
+    }
+
+    const updateData = {
+      statusReview,
+      ...(notes && notes.trim() !== ""
+        ? { notes, updatedNotes: new Date() }
+        : {}),
+    };
+
     const updatedCar = await prisma.car.update({
       where: { id: carId },
-      data: { statusReview },
+      data: updateData,
       include: { User: true },
     });
 
-    if (statusReview === "Rejected") {
-      await sendEmail(
-        updatedCar.User.email,
-        "Your Car Listing Has Been Rejected - Stright Deal",
-        `<p>Dear ${updatedCar.User.firstName} ${updatedCar.User.lastName},</p>
-        <p>We regret to inform you that your car listing with ID <strong>${carId}</strong> has been rejected.</p>
-        <p><strong>Reason for Rejection:</strong></p>
-        <blockquote style="background: #f8f8f8; padding: 10px; border-left: 3px solid red;">
-          ${notes}
-        </blockquote>
-        <p>Please review the provided information and make the necessary corrections before resubmitting.</p>
-        <p>Thank you for using <strong>Stright Deal</strong>.</p>
-        <p>Best regards,</p>
-        <p>The Stright Deal Team</p>`
-      );
-    }
-
-    let newActivityLog;
-
-    if (!notes) {
-      newActivityLog = await prisma.activityLog.create({
-        data: {
-          carId,
-          actionType: "ReviewedSubmission",
-          statusReviewLog: statusReview,
-          notes: "",
-        },
-      });
-    } else {
-      newActivityLog = await prisma.activityLog.create({
-        data: {
-          carId,
-          actionType: "ReviewedSubmission",
-          statusReviewLog: statusReview,
-          notes,
-        },
-      });
-    }
+    const newActivityLog = await prisma.activityLog.create({
+      data: {
+        carId,
+        actionType: "ReviewedSubmission",
+        statusReviewLog: statusReview,
+        notes,
+      },
+    });
 
     await prisma.notification.create({
       data: {
@@ -143,12 +134,33 @@ export async function changeStatus(req: Request, res: Response) {
       },
     });
 
+    if (statusReview === "Rejected") {
+      const { firstName, lastName, email } = updatedCar.User;
+      await sendEmail(
+        email,
+        "Your Car Listing Has Been Rejected - Straight Deal",
+        `<p>Dear ${firstName} ${lastName},</p>
+        <p>We regret to inform you that your car listing with ID <strong>${carId}</strong> has been rejected.</p>
+        <p><strong>Reason for Rejection:</strong></p>
+        <blockquote style="background: #f8f8f8; padding: 10px; border-left: 3px solid red;">
+          ${notes}
+        </blockquote>
+        <p>Please review the provided information and make the necessary corrections before resubmitting.</p>
+        <p>Thank you for using <strong>Straight Deal</strong>.</p>
+        <p>Best regards,</p>
+        <p>The Straight Deal Team</p>`
+      );
+    }
+
     res.json({
       message: "Status updated successfully",
       data: updatedCar,
     });
   } catch (error) {
-    res.status(500).json({ message: "Error updating statusReview", error });
+    res.status(500).json({
+      message: "Error updating statusReview",
+      error: (error as Error).message,
+    });
   }
 }
 

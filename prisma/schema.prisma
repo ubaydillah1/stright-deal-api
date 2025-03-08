@@ -136,6 +136,8 @@ model Car {
   province                    String
   city                        String
   seen                        Boolean             @default(false)
+  notes                       String?
+  updatedNotes                DateTime?
   activityLogs                ActivityLog[]
   CarImages                   CarImage[]
   createdAt                   DateTime            @default(now())
