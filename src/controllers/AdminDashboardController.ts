@@ -9,7 +9,7 @@ import {
   getActivityLogsByWeekQuery,
 } from "../utils/filterActivityLogsByQuery";
 import { sendEmail } from "../utils/emailServiceSand";
-import { ActivityLog } from "@prisma/client";
+import { ActivityLog, Car } from "@prisma/client";
 
 export async function getAllCars(req: Request, res: Response) {
   try {
