@@ -554,10 +554,8 @@ export async function updateImages(req: FilesRequest, res: Response) {
     ? imagesToReplace.split(",").map((id: { trim: () => string }) => id.trim())
     : [];
 
-  if (!carId || imagesArray.length === 0) {
-    res
-      .status(400)
-      .json({ message: "Car ID and images to replace are required" });
+  if (!carId) {
+    res.status(400).json({ message: "Car ID is required" });
     return;
   }
 
@@ -577,77 +575,80 @@ export async function updateImages(req: FilesRequest, res: Response) {
       return;
     }
 
-    const oldImages = await prisma.carImage.findMany({
-      where: {
-        id: { in: imagesArray },
-        carId,
-      },
-    });
-
-    if (oldImages.length !== imagesArray.length) {
-      res.status(400).json({
-        message: "Some image IDs are invalid or do not belong to this car",
+    if (imagesArray.length > 0) {
+      const oldImages = await prisma.carImage.findMany({
+        where: {
+          id: { in: imagesArray },
+          carId,
+        },
       });
-      return;
+
+      if (oldImages.length !== imagesArray.length) {
+        res.status(400).json({
+          message: "Some image IDs are invalid or do not belong to this car",
+        });
+        return;
+      }
+
+      const deletePromises = oldImages.map(async (image) => {
+        let fileName = image.imageUrl.split("/").pop();
+
+        if (fileName) {
+          fileName = decodeURIComponent(fileName);
+
+          const { error } = await supabase.storage
+            .from("car-images")
+            .remove([fileName]);
+
+          if (error) {
+            throw new Error(`Failed to delete old image: ${error.message}`);
+          }
+        }
+      });
+
+      await Promise.all(deletePromises);
+
+      await prisma.carImage.deleteMany({
+        where: { id: { in: imagesArray } },
+      });
     }
 
     const fileArray = files ? (Array.isArray(files) ? files : [files]) : [];
+    const uploadedUrls: string[] = [];
 
-    if (fileArray.length !== imagesArray.length) {
-      res.status(400).json({
-        message: "Number of new images must match the images being replaced",
-      });
-      return;
-    }
+    if (fileArray.length > 0) {
+      const uploadPromises = fileArray.map(async (file) => {
+        const fileName = `${carId}_${Date.now()}_${file.name}`;
 
-    const deletePromises = oldImages.map(async (image) => {
-      let fileName = image.imageUrl.split("/").pop();
-
-      if (fileName) {
-        fileName = decodeURIComponent(fileName);
-
-        const { error } = await supabase.storage
+        const { data, error } = await supabase.storage
           .from("car-images")
-          .remove([fileName]);
+          .upload(fileName, file.data, {
+            contentType: file.mimetype,
+          });
+
         if (error) {
-          throw new Error(`Failed to delete old image: ${error.message}`);
+          throw new Error(`Upload failed: ${error.message}`);
         }
-      }
-    });
 
-    await Promise.all(deletePromises);
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("car-images").getPublicUrl(fileName);
 
-    const uploadPromises = fileArray.map(async (file, index) => {
-      const fileName = `${carId}_${Date.now()}_${file.name}`;
-
-      const { data, error } = await supabase.storage
-        .from("car-images")
-        .upload(fileName, file.data, {
-          contentType: file.mimetype,
+        await prisma.carImage.create({
+          data: { carId, imageUrl: publicUrl },
         });
 
-      if (error) {
-        throw new Error(`Upload failed: ${error.message}`);
-      }
-
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("car-images").getPublicUrl(fileName);
-
-      await prisma.carImage.update({
-        where: { id: imagesArray[index] },
-        data: { imageUrl: publicUrl },
+        return publicUrl;
       });
 
-      return publicUrl;
-    });
-
-    const updatedUrls = await Promise.all(uploadPromises);
+      uploadedUrls.push(...(await Promise.all(uploadPromises)));
+    }
 
     res.status(200).json({
       message: "Images updated successfully",
       carId,
-      imageUrls: updatedUrls,
+      deletedImages: imagesArray,
+      newImageUrls: uploadedUrls,
     });
   } catch (error) {
     const e = error as Error;
