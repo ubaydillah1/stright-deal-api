@@ -699,14 +699,6 @@ export async function getUser(req: AuthenticatedRequest, res: Response) {
 
     const userData = await prisma.user.findUnique({
       where: { id: user?.id },
-      select: {
-        id: true,
-        email: true,
-        isEmailVerified: true,
-        isPhoneVerified: true,
-        role: true,
-        createdAt: true,
-      },
     });
 
     if (!userData) {
