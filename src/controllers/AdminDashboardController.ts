@@ -321,7 +321,16 @@ export const getNotifications = async (req: Request, res: Response) => {
             },
           },
         },
-        Car: true,
+        Car: {
+          include: {
+            User: {
+              select: {
+                lastName: true,
+                firstName: true,
+              },
+            },
+          },
+        },
       },
     });
     res.json(notifications);

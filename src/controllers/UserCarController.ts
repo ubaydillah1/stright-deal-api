@@ -736,7 +736,16 @@ export const getUserNotifications = async (
             },
           },
         },
-        Car: true,
+        Car: {
+          include: {
+            User: {
+              select: {
+                lastName: true,
+                firstName: true,
+              },
+            },
+          },
+        },
       },
     });
 
