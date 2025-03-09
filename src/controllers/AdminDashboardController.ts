@@ -312,7 +312,15 @@ export const getNotifications = async (req: Request, res: Response) => {
     const notifications = await prisma.notification.findMany({
       orderBy: { createdAt: "desc" },
       include: {
-        ActivityLog: true,
+        ActivityLog: {
+          include: {
+            Car: {
+              select: {
+                vin: true,
+              },
+            },
+          },
+        },
         Car: true,
       },
     });

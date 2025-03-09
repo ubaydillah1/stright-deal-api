@@ -727,7 +727,15 @@ export const getUserNotifications = async (
       },
       orderBy: { createdAt: "desc" },
       include: {
-        ActivityLog: true,
+        ActivityLog: {
+          include: {
+            Car: {
+              select: {
+                vin: true,
+              },
+            },
+          },
+        },
         Car: true,
       },
     });
