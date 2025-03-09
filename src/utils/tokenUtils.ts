@@ -8,7 +8,7 @@ export type User = {
 
 export function generateAccessToken(user: User): string {
   return jwt.sign(user, process.env.JWT_ACCESS_TOKEN_SECRET!, {
-    expiresIn: "1d",
+    expiresIn: "10s",
   });
 }
 
