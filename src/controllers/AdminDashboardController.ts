@@ -131,6 +131,7 @@ export async function changeStatus(req: Request, res: Response) {
     await prisma.notification.create({
       data: {
         activityLogId: newActivityLog.id,
+        carId,
       },
     });
 

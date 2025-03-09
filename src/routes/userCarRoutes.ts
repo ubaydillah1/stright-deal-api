@@ -20,4 +20,6 @@ router.put(
   UserCarController.updateImages
 );
 
+router.get("/notifications", UserCarController.getUserNotifications);
+
 export default router;

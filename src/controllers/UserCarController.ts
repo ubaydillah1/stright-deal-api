@@ -711,3 +711,29 @@ export async function getCarsUser(req: AuthenticatedRequest, res: Response) {
     });
   }
 }
+
+export const getUserNotifications = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  try {
+    const id = req.user?.id;
+
+    const notifications = await prisma.notification.findMany({
+      where: {
+        Car: {
+          userId: id,
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      include: {
+        ActivityLog: true,
+        Car: true,
+      },
+    });
+
+    res.json(notifications);
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
