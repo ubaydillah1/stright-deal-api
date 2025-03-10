@@ -721,11 +721,22 @@ export const getUserNotifications = async (
 
     const notifications = await prisma.notification.findMany({
       where: {
-        ActivityLog: {
-          Car: {
-            userId: id,
+        OR: [
+          {
+            carId: { not: null },
+            Car: {
+              userId: id,
+            },
           },
-        },
+          {
+            carId: null,
+            ActivityLog: {
+              Car: {
+                userId: id,
+              },
+            },
+          },
+        ],
       },
       orderBy: { createdAt: "desc" },
       include: {
@@ -753,6 +764,7 @@ export const getUserNotifications = async (
 
     res.json(notifications);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
