@@ -613,6 +613,7 @@ export async function updateImages(req: FilesRequest, res: Response) {
       });
     }
 
+    // **Proses Upload Gambar Baru (Jika Ada)**
     const fileArray = files ? (Array.isArray(files) ? files : [files]) : [];
     const uploadedUrls: string[] = [];
 
