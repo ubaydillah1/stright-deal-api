@@ -721,8 +721,10 @@ export const getUserNotifications = async (
 
     const notifications = await prisma.notification.findMany({
       where: {
-        Car: {
-          userId: id,
+        ActivityLog: {
+          Car: {
+            userId: id,
+          },
         },
       },
       orderBy: { createdAt: "desc" },
